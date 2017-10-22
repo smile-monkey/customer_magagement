@@ -1,19 +1,39 @@
-# Build and Release Folders
-bin/
-bin-debug/
-bin-release/
-[Oo]bj/ # FlashDevelop obj
-[Bb]in/ # FlashDevelop bin
+/*.log
+.gitignore
+/.htaccess
+.htaccess
+index.php
+/license.txt
+license.txt
+/readme.html
+readme.html
+README.md
+/sitemap.xml
+/sitemap.xml.gz
+fonts/
+wp-admin/
+wp-includes/
+cursors/
+wp-activate.php
+wp-blog-header.php
+wp-comments-post.php
+wp-config-sample.php
+wp-config.php
+wp-cron.php
+wp-links-opml.php
+wp-load.php
+wp-login.php
+wp-mail.php
+wp-settings.php
+wp-signup.php
+wp-trackback.php
+xmlrpc.php
 
-# Other files and folders
-.settings/
+wp-content/cache/
+wp-content/uploads/
+wp-content/ai1wm-backups
+wp-content/login-logo.png
+wp-content/plugins/*
+!wp-content/plugins/customer-management
 
-# Executables
-*.swf
-*.air
-*.ipa
-*.apk
-
-# Project files, i.e. `.project`, `.actionScriptProperties` and `.flexProperties`
-# should NOT be excluded as they contain compiler settings and other important
-# information for Eclipse / Flash Builder.
+wp-content/themes/*
