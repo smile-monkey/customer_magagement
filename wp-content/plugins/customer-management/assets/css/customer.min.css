@@ -72,6 +72,7 @@
     font-size: 14px;
     color: #000;
     padding-right: 50px;
+    vertical-align: middle;
 }
 .add_form_table tr > td {
 	padding-bottom: 20px;

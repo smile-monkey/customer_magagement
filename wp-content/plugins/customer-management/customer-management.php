@@ -40,6 +40,10 @@ if (!class_exists(Customer_Management)){
 		function __construct()
 		{
 			/**
+			 * Create a table for customer management.
+			 */
+			register_activation_hook( __FILE__,array( &$this,'register_database'));			
+			/**
 			 * Add sub menu page to menu
 			 */
 			add_action('admin_menu', array(&$this, 'Customer_Management_Menu'));
@@ -56,7 +60,30 @@ if (!class_exists(Customer_Management)){
 			add_action( 'wp_ajax_show_list', array(&$this,'show_list'));
 
 		}
-
+		/**
+		 * Create a table for customer management.
+		 */
+		function register_database() {
+			global $wpdb;
+			try {
+				$query = "CREATE TABLE IF NOT EXISTS`".$wpdb->prefix."woocommerce_customers` (
+						  `id` int(11) NOT NULL AUTO_INCREMENT,
+						  `user_id` int(11) DEFAULT NULL,
+						  `user_status` int(11) DEFAULT NULL COMMENT 'hold:0,active:1,inactive:2',
+						  `customer_type` varchar(255) COLLATE utf8mb4_unicode_520_ci DEFAULT NULL COMMENT 'retailer, business',
+						  `group_id` int(11) DEFAULT NULL,
+						  `company` varchar(255) COLLATE utf8mb4_unicode_520_ci DEFAULT NULL,
+						  `tax_number` varchar(255) COLLATE utf8mb4_unicode_520_ci DEFAULT NULL,
+						  `phone` varchar(255) COLLATE utf8mb4_unicode_520_ci DEFAULT NULL,
+						  `mobile` varchar(255) COLLATE utf8mb4_unicode_520_ci DEFAULT NULL,
+						  `shipping_check` int(11) DEFAULT NULL COMMENT '0 or 1',
+						  PRIMARY KEY (`id`)
+						) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_520_ci";
+				$wpdb->query($query);
+			} catch (Exception $e) {
+				echo $e;
+			}			
+		}
 		/**
 		 * Display Customer Management Plugin Menu
 		 */
@@ -225,26 +252,26 @@ if (!class_exists(Customer_Management)){
 		  	<h1>Add New Customer</h1>
 		  </div>
 		  <div class="add-content">
-		  	<form id="add_form">
+		  	<form id="add_form" method="post" action="" enctype="multipart/form-data">
 		  		<table class="add_form_table">
 		  		  <tr>
 	  				<td colspan="2">
 		  				<span class="td-text">Customer Type*</span>
-		  				<label for="Retailer" style="padding-right: 20px; padding-left: 4px;"><input type="radio" name="customer_type" id="retailer" value="retailer">Retail Customer</label>
-		  				<label for="Business"><input type="radio" name="customer_type" id="business" value="business">Business Customer</label>
+		  				<label for="Retailer" style="padding-right: 20px; padding-left: 4px;"><input type="radio" name="customer_type" value="retailer" checked>Retail Customer</label>
+		  				<label for="Business"><input type="radio" name="customer_type" value="business">Business Customer</label>
 	  				</td>
 		  		  </tr>
 		  		  <tr>
 		  		  	<td colspan="2">
 		  		  		<span class="td-text">Customer Group</span>
-						<select id="group_select" name="group_select"><?php echo $group_options;?></select> 		
+						<select id="group_id" name="group_id"><?php echo $group_options;?></select> 		
 		  		  	</td>
 		  		  </tr>
 		  		  <tr>
 		  		  	<td colspan="2">
 		  		  		<span class="td-text" style="float: left;">Account Status</span>
-		  		  		<span style="float: left;">
-			  		  		<input type="checkbox" class="multi-switch" initial-value="0" unchecked-value="2" checked-value="1" value="0" />
+		  		  		<span style="float: left;margin-top: -5px;">
+			  		  		<input type="checkbox" class="multi-switch" initial-value="0" unchecked-value="2" checked-value="1" value="0" name="user_status" id="user_status" />
 		  		  		</span>
 		  		  	</td>
 		  		  </tr>
@@ -287,20 +314,19 @@ if (!class_exists(Customer_Management)){
 		  		  <tr>
 		  		  	<td colspan="2">
 		  		  		<input name="shipping_check" type="checkbox" id="shipping_check" value="">
-		  		  			<span class="td-text">Is Shipping address as same as Billing Address</span>
-		  		  		</input>
+		  		  		<span class="td-text">Is Shipping address as same as Billing Address</span>
 		  		  	</td>
 		  		  </tr>
 		  		  <tr>
 		  		  	<td>
-		  		  		<span class="td-text">Billing Address</span><br>
+		  		  		<span class="td-text" id="billing_title">Billing Address</span><br>
 		  		  		<input type="text" name="billing_address_1" id="billing_address_1" placeholder="Street Name"><br>
 		  		  		<input type="text" name="billing_address_2" id="billing_address_2" placeholder="Suburb"><br>
 		  		  		<input type="text" name="billing_city" id="billing_city" placeholder="State / Province"><br>
 		  		  		<input type="text" name="billing_postcode" id="billing_postcode" placeholder="Postal Code / Zip Code"><br>
 		  		  		<select name="billing_country" id="billing_country" class="country-select"><?php echo $country_options;?></select>		  		  		
 		  		  	</td>
-		  		  	<td>
+		  		  	<td id="shipping_data">
 		  		  		<span class="td-text">Shipping Address</span><br>
 		  		  		<input type="text" name="shipping_address_1" id="shipping_address_1" placeholder="Street Name"><br>
 		  		  		<input type="text" name="shipping_address_2" id="shipping_address_2" placeholder="Suburb"><br>
@@ -321,7 +347,7 @@ if (!class_exists(Customer_Management)){
 		  	</form>
 		  </div>
 	<?php
-		}		
+		}
 
 		function add_group() {
 			$this->add_customer();
@@ -330,5 +356,9 @@ if (!class_exists(Customer_Management)){
 }
 
 $customerManagement = new Customer_Management();
+
+if (isset( $_POST['save_btn'] ) ) {
+	var_dump($_POST);exit;
+}
 
 ?>
