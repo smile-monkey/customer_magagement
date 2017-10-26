@@ -1,7 +1,5 @@
 /* Main Page Style */
-.customer-body {
-	/*display: none;*/
-}
+
 .main-title {
 	font-size: 32px !important;
 	font-weight: 600 !important;
@@ -44,8 +42,8 @@
 	vertical-align: middle;
 }
 
-/* Add Customer or Group */
-.customer-add, .group-add {
+/* Add Customer, Group or View Customer */
+.customer-add, .group-add, .customer-edit {
 	margin: 20px;
     padding: 20px;
     padding-left: 40px;
@@ -81,7 +79,7 @@
 	width: 70px;
     padding-left: 15px;
 }
-.add_form_table input[type=text] {
+.add_form_table input[type=text], .add_form_table input[type=email], .add_form_table input[type=password] {
 	width: 200px;
 	margin-right: 70px;
 	margin-top: 10px;
@@ -100,7 +98,7 @@
     border-radius: 5px;
     cursor: pointer;
 }
-#save_btn {
+#save_new_btn {
     background-color: #12af0a;
     background-image: url(../../assets/images/check-symbol.png);
     background-repeat: no-repeat;
@@ -108,4 +106,21 @@
     background-position-y: 5px;
     background-size: 28px;
     padding-left: 30px;
+}
+/*.customer-edit {
+    display: block;
+}
+.customer-body {
+    display: none;
+}*/
+/* Customer Edit Page */
+#customer_edit_select {
+    float: right;
+    margin-top: -35px;
+}
+.customer-edit .add-header {
+    height: 60px;
+}
+.customer-edit-body {
+    margin: 35px;
 }

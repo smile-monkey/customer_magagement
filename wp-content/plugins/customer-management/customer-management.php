@@ -36,9 +36,12 @@ if (!class_exists(Customer_Management)){
 	*/
 	class Customer_Management
 	{
-		
+		public $_customer_tb;
+
 		function __construct()
 		{
+			global $wpdb;
+			$this->_customer_tb = $wpdb->prefix."woocommerce_customers";
 			/**
 			 * Create a table for customer management.
 			 */
@@ -58,6 +61,9 @@ if (!class_exists(Customer_Management)){
 			 * Ajax define
 			 */
 			add_action( 'wp_ajax_show_list', array(&$this,'show_list'));
+			add_action( 'wp_ajax_save_customer_data', array(&$this,'save_customer_data'));
+			add_action( 'wp_ajax_show_customer_edit', array(&$this,'show_customer_edit'));
+			add_action( 'wp_ajax_show_customer_nav', array(&$this,'show_customer_nav'));
 
 		}
 		/**
@@ -65,8 +71,9 @@ if (!class_exists(Customer_Management)){
 		 */
 		function register_database() {
 			global $wpdb;
+
 			try {
-				$query = "CREATE TABLE IF NOT EXISTS`".$wpdb->prefix."woocommerce_customers` (
+				$query = "CREATE TABLE IF NOT EXISTS`".$this->_customer_tb."` (
 						  `id` int(11) NOT NULL AUTO_INCREMENT,
 						  `user_id` int(11) DEFAULT NULL,
 						  `user_status` int(11) DEFAULT NULL COMMENT 'hold:0,active:1,inactive:2',
@@ -110,9 +117,9 @@ if (!class_exists(Customer_Management)){
 
 			wp_enqueue_script( 'customerManagement-js', PLUGINURL.'assets/js/customer.min.js');
 			wp_enqueue_style( 'customerManagement-css', PLUGINURL.'assets/css/customer.min.css');
+			wp_enqueue_style( 'woocommerce-admin-css', PLUGINURL.'assets/css/woocommerce-admin.min.css');
 
 		}
-
 
 		function Customer_management_Main() {
 		?>
@@ -155,7 +162,7 @@ if (!class_exists(Customer_Management)){
 					$content = $this->DisplayGroup();
 					break;
 				case 'price_list':
-					$content = $this->DisplayCustomer();
+					$content = $this->DisplayGroup();
 					break;
 				case 'payment_list':
 					$content = $this->DisplayGroup();
@@ -169,6 +176,7 @@ if (!class_exists(Customer_Management)){
 		}
 
 		function DisplayCustomer() {
+			$customer_list = get_customer_list($this->_customer_tb);
 			$content = '
 				<table class="widefat striped customer-table">
 					<thead>
@@ -181,23 +189,29 @@ if (!class_exists(Customer_Management)){
 							<td>Action</td>
 						</tr>
 					</thead>
-					<tbody>
-						<tr>
-							<td>123456</td>
-							<td>Kinjal Patel Director</td>
-							<td>Hi-TECH LIMITED</td>
-							<td>115</td>
-							<td>$2340.00</td>
-							<td>Action</td>
-						</tr>
-						<tr>
-							<td>56789</td>
-							<td>Frank Firely Director</td>
-							<td>COCA COLA LIMITED</td>
-							<td>115</td>
-							<td>$2340.00</td>
-							<td>Action</td>
-						</tr>
+					<tbody>';
+				if (sizeof($customer_list)>0) {
+					foreach ($customer_list as $customer) {
+						$user_info = get_user_meta($customer->user_id);
+						$content .='
+							<tr>
+								<td>'.$customer->user_id.'</td>
+								<td>'.$user_info['first_name'][0].' '.$user_info['last_name'][0].'</td>
+								<td>'.$customer->company.'</td>
+								<td>0</td>
+								<td>$0.00</td>
+								<td class="user_actions column-user_actions">
+								  <p>
+									<a class="button tips edit" href="#" data-cusotmer_id="'.$customer->id.'">Edit</a>
+									<a class="button tips view" href="#" data-cusotmer_id="'.$customer->id.'">View orders</a>
+								  </p>
+								</td>
+							</tr>
+						';
+					}
+				}
+
+			$content .='
 					</tbody>
 				</table>
 			';
@@ -206,7 +220,7 @@ if (!class_exists(Customer_Management)){
 
 		function DisplayGroup() {
 			$content = '
-				<table class="widefat striped customer-table">
+				<table class="widefat striped group-table">
 					<thead>
 						<tr>
 							<td>Group ID</td>
@@ -219,20 +233,30 @@ if (!class_exists(Customer_Management)){
 					</thead>
 					<tbody>
 						<tr>
-							<td>3453</td>
+							<td>123456</td>
 							<td>Kinjal Patel Director</td>
 							<td>Hi-TECH LIMITED</td>
-							<td>35</td>
-							<td>$723.00</td>
-							<td>Action</td>
+							<td>0</td>
+							<td>$0.00</td>
+							<td class="user_actions column-user_actions">
+							  <p>
+								<a class="button tips edit" href="#">Edit</a>
+								<a class="button tips view" href="#">View orders</a>
+							  </p>
+							</td>
 						</tr>
 						<tr>
-							<td>63634</td>
+							<td>56789</td>
 							<td>Frank Firely Director</td>
 							<td>COCA COLA LIMITED</td>
-							<td>45</td>
-							<td>$240.00</td>
-							<td>Action</td>
+							<td>0</td>
+							<td>$0.00</td>
+							<td class="user_actions column-user_actions">
+							  <p>
+								<a class="button tips edit" href="#">Edit</a>
+								<a class="button tips view" href="#">View orders</a>
+							  </p>
+							</td>
 						</tr>
 					</tbody>
 				</table>
@@ -252,7 +276,7 @@ if (!class_exists(Customer_Management)){
 		  	<h1>Add New Customer</h1>
 		  </div>
 		  <div class="add-content">
-		  	<form id="add_form" method="post" action="" enctype="multipart/form-data">
+		  	<form id="add_form" method="post" action="" enctype="multipart/form-data" autocomplete="on">
 		  		<table class="add_form_table">
 		  		  <tr>
 	  				<td colspan="2">
@@ -271,8 +295,9 @@ if (!class_exists(Customer_Management)){
 		  		  	<td colspan="2">
 		  		  		<span class="td-text" style="float: left;">Account Status</span>
 		  		  		<span style="float: left;margin-top: -5px;">
-			  		  		<input type="checkbox" class="multi-switch" initial-value="0" unchecked-value="2" checked-value="1" value="0" name="user_status" id="user_status" />
+			  		  		<input type="checkbox" class="multi-switch" initial-value="0" unchecked-value="2" checked-value="1" value="0" name="account_status" id="account_status" />
 		  		  		</span>
+		  		  		<input type="hidden" name="user_status" id="user_status" value="0">
 		  		  	</td>
 		  		  </tr>
 		  		  <tr>
@@ -285,6 +310,16 @@ if (!class_exists(Customer_Management)){
 		  		  		<input name="last_name" type="text" id="last_name" value="">
 		  		  	</td>		  		  	
 		  		  </tr>
+		  		  <tr>
+		  		  	<td>
+		  		  		<span class="td-text">Username</span><br>
+		  		  		<input name="user_login" type="text" id="user_login" value="">
+		  		  	</td>
+		  		  	<td>
+		  		  		<span class="td-text">Password</span><br>
+		  		  		<input name="user_pass" type="password" id="user_pass" value="">
+		  		  	</td>		  		  	
+		  		  </tr>		  		  
 		  		  <tr>
 		  		  	<td>
 		  		  		<span class="td-text">Company Name</span><br>
@@ -308,13 +343,14 @@ if (!class_exists(Customer_Management)){
 		  		  <tr>
 		  		  	<td colspan="2">
 		  		  		<span class="td-text">Email Address</span><br>
-		  		  		<input name="email" type="text" id="email" value="" style="width: calc(100% - 70px);">
+		  		  		<input name="user_email" type="email" id="user_email" value="" style="width: calc(100% - 70px);" autocomplete="off">
 		  		  	</td>
 		  		  </tr>
 		  		  <tr>
 		  		  	<td colspan="2">
-		  		  		<input name="shipping_check" type="checkbox" id="shipping_check" value="">
+		  		  		<input name="shipping_chk_box" type="checkbox" id="shipping_chk_box" value="">
 		  		  		<span class="td-text">Is Shipping address as same as Billing Address</span>
+		  		  		<input type="hidden" name="shipping_check" id="shipping_check" value="0">
 		  		  	</td>
 		  		  </tr>
 		  		  <tr>
@@ -340,7 +376,7 @@ if (!class_exists(Customer_Management)){
 		  		  		<input type="button" name="cancel_btn" id="cancel_btn" class="customer-button" value="Cancel"/>
 		  		  	</td>
 		  		  	<td>
-		  		  		<input type="submit" name="save_btn" id="save_btn" class="customer-button" value="Save"/>
+		  		  		<input type="submit" name="save_new_btn" id="save_new_btn" class="customer-button" value="Save"/>
 		  		  	</td>
 		  		  </tr>		  		  
 		  		</table>
@@ -352,13 +388,104 @@ if (!class_exists(Customer_Management)){
 		function add_group() {
 			$this->add_customer();
 		}
+
+		function save_customer_data() {
+
+			global $wpdb;
+			$save_data = array();
+
+			parse_str($_POST['form_data'],$save_data);
+
+			// create new user
+			$user_id = username_exists( $save_data['user_login'] );
+			if ( !$user_id and email_exists($save_data['user_email']) == false ) {
+
+				// $save_data['user_pass'] = md5($save_data['user_pass']);
+				$save_data['user_id'] = wp_insert_user( $save_data);
+
+				// Insert new row in Customers Table
+				$customer_data = array();
+				$colNames = $wpdb->get_col("DESC {$this->_customer_tb}", 0);
+				foreach ($colNames as $colname) {
+					if (isset($save_data[$colname]) && $save_data[$colname] !=null) {
+						$customer_data[$colname] = $save_data[$colname];
+					}
+				}
+				if (sizeof($customer_data) > 0) {
+					$wpdb->insert($this->_customer_tb,$customer_data);
+				}
+				// Add User meta data for billing and shipping
+				foreach ($save_data as $key => $value) {
+					if (strpos($key,"billing_")==0 || strpos($key,"shipping_")==0) {
+						update_user_meta($save_data['user_id'],$key,$value);
+					}
+				}
+			} else {
+				echo "User already exists.";
+			}
+			
+			exit("ok");
+
+		}
+
+		function show_customer_edit() {
+			$customer_id = $_POST['customer_id'];
+			if ($customer_id) {
+				$customer_data = get_customer_data($this->_customer_tb,$customer_id);
+				$user_info = get_user_meta($customer_data->user_id);
+			?>
+			  <div class="add-header">
+			  	<img src="<?php echo plugins_url( '/assets/images/customer-icon.png' , __FILE__ );?>">
+			  	<h1><?php echo $user_info['first_name'][0]." ".$user_info['last_name'][0]." / ".$customer_data->company;?></h1>
+				<select id="customer_edit_select" name="customer_edit_select">
+					<option value="edit" selected=true >--Edit--</option>
+					<option value="view">--View--</option>
+				</select>			  	
+			  </div>
+			  <nav class="nav-tab-wrapper woo-nav-tab-wrapper customer_edit_nav">
+				<a href="#" class="nav-tab nav-tab-active " id="customer_info" name="customer_info">Personal Information</a>
+				<a href="#" class="nav-tab" id="customer_transaction" name="customer_transaction">Transactions</a>
+				<a href="#" class="nav-tab" id="customer_price" name="customer_price">Price List</a>
+				<a href="#" class="nav-tab" id="customer_delivery" name="customer_delivery">Delivery</a>
+				<a href="#" class="nav-tab" id="customer_doc" name="customer_doc">Documents</a>
+				<a href="#" class="nav-tab" id="customer_login" name="customer_login">Login Credentials</a>
+			  </nav>
+			  <div class="customer-edit-body">
+			  	<?php echo $this->get_customer_nav($customer_id,'customer_info');?>
+			  </div>
+			<?php
+
+			}else {
+				echo "Customer Loading Error!";
+			}
+
+			die();
+		}
+
+		function show_customer_nav() {
+			$customer_id = $_POST['customer_id'];
+			$nav_id = $_POST['nav_id'];
+			echo $this->get_customer_nav($customer_id,$nav_id);
+			exit();
+		}
+
+		function get_customer_nav($customer_id,$nav_id) {
+			$content = "";
+			switch ($nav_id) {
+				case 'customer_info':
+					$content = get_customer_info($this->_customer_tb, $customer_id);
+					break;
+				default:
+					$content = get_customer_info($this->_customer_tb, $customer_id);
+					break;
+			}
+			return $content;
+		}
 	}
 }
 
 $customerManagement = new Customer_Management();
 
-if (isset( $_POST['save_btn'] ) ) {
-	var_dump($_POST);exit;
-}
+
 
 ?>
