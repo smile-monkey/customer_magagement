@@ -123,4 +123,5 @@
 }
 .customer-edit-body {
     margin: 35px;
+    min-height: 500px;
 }

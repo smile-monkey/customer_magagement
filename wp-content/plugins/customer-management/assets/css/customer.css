@@ -1,4 +1,127 @@
+/* Main Page Style */
+
 .main-title {
-	font-size: 32px !important;
-	font-weight: 600 !important;
+    font-size: 32px !important;
+    font-weight: 600 !important;
+    display: inline-block;
+}
+#customer_select {
+    float: right;
+    margin: 18px;
+}
+.customer-list ul {
+    white-space:nowrap;
+    margin-top: 0px;
+}
+.customer-list li {
+    display: inline-block;
+    padding-right: 10px;
+    padding-left: 10px;
+    font-size: 16px;
+    text-decoration: underline;
+    border-right: 1px solid #444;
+    cursor: pointer;
+}
+.customer-list li:last-child {
+    border-right: 0px;
+}
+.list-selected {
+    color: #cc4f1e;
+}
+#main_content {
+    margin-left: 20px;
+    margin-right: 20px;
+}
+.customer-table td:first-child {
+    width: 15%;
+}
+.customer-table td:nth-child(2), .customer-table td:nth-child(3) {
+    width: 20%;
+}
+.customer-table thead > tr > td {
+    vertical-align: middle;
+}
+
+/* Add Customer, Group or View Customer */
+.customer-add, .group-add, .customer-edit {
+    margin: 20px;
+    padding: 20px;
+    padding-left: 40px;
+    border: 1px solid #E5E5E5;
+    background: #fff;
+    display: none;
+}
+.add-header {
+    height: 80px;
+}
+.add-header img {
+    float: left;
+    width: 50px;
+}
+.add-header h1 {
+    padding-top: 15px;
+    padding-left: 55px;
+    font-size: 32px;
+    font-weight: 400;
+    color: #9d9fa2;
+}
+.td-text{
+    font-weight: 600;
+    font-size: 14px;
+    color: #000;
+    padding-right: 50px;
+    vertical-align: middle;
+}
+.add_form_table tr > td {
+    padding-bottom: 20px;
+}
+.multi-switch {
+    width: 70px;
+    padding-left: 15px;
+}
+.add_form_table input[type=text], .add_form_table input[type=email], .add_form_table input[type=password] {
+    width: 200px;
+    margin-right: 70px;
+    margin-top: 10px;
+}
+.country-select {
+    margin-top: 10px;
+    width: 200px;
+}
+.customer-button {
+    width: 150px;
+    height: 40px;
+    margin-left: 25px;
+    background: #474747;
+    color: #fff;
+    font-size: 20px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+#save_new_btn {
+    background-color: #12af0a;
+    background-image: url(../../assets/images/check-symbol.png);
+    background-repeat: no-repeat;
+    background-position-x: 30px;
+    background-position-y: 5px;
+    background-size: 28px;
+    padding-left: 30px;
+}
+/*.customer-edit {
+    display: block;
+}
+.customer-body {
+    display: none;
+}*/
+/* Customer Edit Page */
+#customer_edit_select {
+    float: right;
+    margin-top: -35px;
+}
+.customer-edit .add-header {
+    height: 60px;
+}
+.customer-edit-body {
+    margin: 35px;
+    min-height: 500px;
 }

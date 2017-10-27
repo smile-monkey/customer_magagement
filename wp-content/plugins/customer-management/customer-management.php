@@ -112,12 +112,12 @@ if (!class_exists(Customer_Management)){
 		
 		function Customer_Management_Init() {
 			// wp_enqueue_script( 'jquery-1-12-1-js', PLUGINURL.'assets/js/jquery-1.12.1.min.js');
+			wp_enqueue_style( 'woocommerce-admin-css', PLUGINURL.'assets/css/woocommerce-admin.min.css');
 			wp_enqueue_style( 'multiSwith-css', PLUGINURL.'assets/css/multi-switch.min.css');
 			wp_enqueue_script( 'multiSwith-js', PLUGINURL.'assets/js/multi-switch.js');
 
 			wp_enqueue_script( 'customerManagement-js', PLUGINURL.'assets/js/customer.min.js');
 			wp_enqueue_style( 'customerManagement-css', PLUGINURL.'assets/css/customer.min.css');
-			wp_enqueue_style( 'woocommerce-admin-css', PLUGINURL.'assets/css/woocommerce-admin.min.css');
 
 		}
 
@@ -475,6 +475,21 @@ if (!class_exists(Customer_Management)){
 				case 'customer_info':
 					$content = get_customer_info($this->_customer_tb, $customer_id);
 					break;
+				case 'customer_transaction':
+					$content = get_customer_transaction($this->_customer_tb, $customer_id);
+					break;					
+				case 'customer_price':
+					$content = get_customer_price($this->_customer_tb, $customer_id);
+					break;					
+				case 'customer_delivery':
+					$content = get_customer_delivery($this->_customer_tb, $customer_id);
+					break;					
+				case 'customer_doc':
+					$content = get_customer_doc($this->_customer_tb, $customer_id);
+					break;
+				case 'customer_login':
+					$content = get_customer_login($this->_customer_tb, $customer_id);
+					break;					
 				default:
 					$content = get_customer_info($this->_customer_tb, $customer_id);
 					break;
