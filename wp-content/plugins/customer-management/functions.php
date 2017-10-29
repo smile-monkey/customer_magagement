@@ -52,7 +52,7 @@ function get_customer_list($customer_tb) {
  */
 function get_customer_data($customer_tb,$customer_id) {
 	global $wpdb;
-	$customer_data = $wpdb->get_row($wpdb->prepare("select * from `".$customer_tb."` where id=".$customer_id));
+	$customer_data = $wpdb->get_row($wpdb->prepare("select * from `".$customer_tb."` where `id`= %d", $customer_id));
 	return $customer_data;
 }
 
@@ -61,48 +61,61 @@ function get_customer_info($customer_tb,$customer_id) {
 	$user_meta_info = get_user_meta($customer_data->user_id);
 	$user_info = get_userdata($customer_data->user_id);
 
-	$billing_countries = get_country_options($user_meta_info['shipping_country'][0]);
+	$billing_countries = get_country_options($user_meta_info['billing_country'][0]);
 	$shipping_countries = get_country_options($user_meta_info['shipping_country'][0]);
 
 	$content = "
+	<form id='customer_edit_data' method='post' class='customer-edit-data' action='' enctype='multipart/form-data'>
 	  <div style='float:left;'>
 	  	<table class='add_form_table'>
 	  	  <tr>
 	  		<td><span class='td-text'>Customer Number:</span></td>
-	  		<td><input type='text' name='company' id='company' value='".$customer_data->id."' disabled></td>
+	  		<td>
+	  			<input type='text' value='".$customer_data->id."' disabled>
+	  			<input type='hidden' name='customer_id' id='customer_id' value='".$customer_data->id."'>
+	  			<input type='hidden' name='user_id' id='user_id' value='".$customer_data->user_id."'>
+	  			<input type='hidden' name='main_tab' id='main_tab' value='customer_info'>
+			</td>
 	  	  </tr>
 	  	  <tr>
-	  		<td><span class='td-text'>Customer Type:</span>
-	  		<td><input id='company' name='company' type='text' value='".$customer_data->customer_type."' disabled></td>
+	  		<td><span class='td-text'>Customer Type:</span></td>
+	  		<td><input name='customer_type' type='text' value='".$customer_data->customer_type."' disabled></td>
 	  	  </tr>
 	  	  <tr>
-	  		<td><span class='td-text'>Customer Group:</span>
-	  		<td><input id='company' name='company' type='text' value='".$customer_data->group_id."' disabled></td>
+	  		<td><span class='td-text'>Customer Group:</span></td>
+	  		<td><select id='group_id' name='group_id'>".get_group_options($customer_data->group_id)."</select></td>
 	  	  </tr>
 	  	  <tr>
-	  		<td><span class='td-text'>Company Name:</span>
+	  		<td><span class='td-text'>Company Name:</span></td>
 	  		<td><input id='company' name='company' type='text' value='".$customer_data->company."'s></td>
 	  	  </tr>	  	  	  	  
 	  	  <tr>
-	  		<td><span class='td-text'>First Name:</span>
-	  		<td><input id='company' name='company' type='text' value='".$user_meta_info['first_name'][0]."'></td>
+	  		<td><span class='td-text'>First Name:</span></td>
+	  		<td><input id='first_name' name='first_name' type='text' value='".$user_meta_info['first_name'][0]."'></td>
 	  	  </tr>
 	  	  <tr>
-	  		<td><span class='td-text'>Last Name:</span>
-	  		<td><input id='company' name='company' type='text' value='".$user_meta_info['last_name'][0]."'></td>
+	  		<td><span class='td-text'>Last Name:</span></td>
+	  		<td><input id='last_name' name='last_name' type='text' value='".$user_meta_info['last_name'][0]."'></td>
 	  	  </tr>
 	  	  <tr>
-	  		<td><span class='td-text'>Mobile:</span>
-	  		<td><input id='company' name='company' type='text' value='".$customer_data->mobile."'></td>
+	  		<td><span class='td-text'>Mobile:</span></td>
+	  		<td><input id='mobile' name='mobile' type='text' value='".$customer_data->mobile."'></td>
 	  	  </tr>	
 	  	  <tr>
-	  		<td><span class='td-text'>Email Address:</span>
-	  		<td><input id='company' name='company' type='text' value='".$user_info->data->user_email."'></td>
+	  		<td><span class='td-text'>Email Address:</span></td>
+	  		<td><input id='user_email' name='user_email' type='text' value='".$user_info->data->user_email."'></td>
 	  	  </tr>	  	  
 	  	  <tr>
-	  		<td><span class='td-text'>Account Status:</span>
-	  		<td><input type='checkbox' class='multi-switch' initial-value='0' unchecked-value='2' checked-value='1' value='".$customer_data->user_status."' name='account_edit_status' id='account_edit_status' /></td>
-	  	  </tr>		  	    	  	  	  	  	  
+	  		<td><span class='td-text'>Account Status:</span></td>
+	  		<td class='account-status-box'><input type='checkbox' class='multi-switch' initial-value='0' unchecked-value='2' checked-value='1' value='".$customer_data->user_status."' name='account_edit_status' id='account_edit_status' />
+	  			<input type='hidden' name='user_status' id='user_status' value='".$customer_data->user_status."'>
+	  		</td>
+	  	  </tr>
+	  	  <tr>
+			  <td colspan='2' class='edit-footer'>
+			  	<input type='submit' class='customer-button customer-edit-button' value='Save'>
+			  </td>
+	  	  </tr>
 	  	</table>
 	  </div>
 
@@ -112,23 +125,23 @@ function get_customer_info($customer_tb,$customer_id) {
   		  	<td>
   		  		<span class='td-text'>Billing Address</span><br>
   		  		<input type='text' name='billing_address_1' id='billing_address_1' value='".$user_meta_info['billing_address_1'][0]."'><br>
-  		  		<input type='text' name='billing_address_2' id='billing_address_2' value='".$user_meta_info['billing_address_2'][0]."'><br>
-  		  		<input type='text' name='billing_city' id='billing_city' value='".$user_meta_info['billing_address_1'][0]."'><br>
-  		  		<input type='text' name='billing_postcode' id='billing_postcode' value='".$user_meta_info['billing_address_1'][0]."'><br>
+  		  		<input type='text' name='billing_city' id='billing_city' value='".$user_meta_info['billing_city'][0]."'><br>
+  		  		<input type='text' name='billing_state' id='billing_state' value='".$user_meta_info['billing_state'][0]."'><br>
+  		  		<input type='text' name='billing_postcode' id='billing_postcode' value='".$user_meta_info['billing_postcode'][0]."'><br>
   		  		<select name='billing_country' id='billing_country' class='country-select'>".$billing_countries."</select>		  		  		
   		  	</td>
   		  	<td id='shipping_data'>
   		  		<span class='td-text'>Shipping Address</span><br>
   		  		<input type='text' name='shipping_address_1' id='shipping_address_1' value='".$user_meta_info['shipping_address_1'][0]."'><br>
-  		  		<input type='text' name='shipping_address_2' id='shipping_address_2' value='".$user_meta_info['shipping_address_2'][0]."'><br>
   		  		<input type='text' name='shipping_city' id='shipping_city' value='".$user_meta_info['shipping_city'][0]."'><br>
+  		  		<input type='text' name='shipping_state' id='shipping_state' value='".$user_meta_info['shipping_state'][0]."'><br>
   		  		<input type='text' name='shipping_postcode' id='shipping_postcode' value='".$user_meta_info['shipping_postcode'][0]."'><br>
   		  		<select name='shipping_country' id='shipping_country' class='country-select'>".$shipping_countries."</select>
   		  	</td>
   		  </tr>
 	  	</table>
 	  </div>
-
+	</form>
 	";
 
 	return $content;
@@ -189,11 +202,9 @@ function get_customer_login($customer_tb,$customer_id) {
 	$customer_data = get_customer_data($customer_tb,$customer_id);
 	$user_info = get_userdata($customer_data->user_id);
 	$content = '
+	  <form method="post" class="customer-edit-data" action="" enctype="multipart/form-data">
 		<div>
 			<h1>Login Credentials</h1>
-		</div>
-
-		<div>
 			<table class="add_form_table">
 	  		  <tr>
 	  		  	<td>
@@ -201,6 +212,8 @@ function get_customer_login($customer_tb,$customer_id) {
 	  		  	</td>
 	  		  	<td>
 	  		  		<input type="text" value="'.$customer_data->id.'" disabled>
+	  		  		<input type="hidden" name="user_id" id="user_id" value="'.$customer_data->user_id.'">
+	  		  		<input type="hidden" name="main_tab" id="main_tab" value="customer_login">
 	  		  	</td>
 	  		  </tr>
 	  		  <tr>
@@ -208,7 +221,7 @@ function get_customer_login($customer_tb,$customer_id) {
 	  		  		<span class="td-text">Registered Email:</span>
 	  		  	</td>
 	  		  	<td>	  		  		
-	  		  		<input name="user_login" type="text" id="user_login" value="'.$user_info->data->user_email.'">
+	  		  		<input name="user_email" type="text" id="user_email" value="'.$user_info->data->user_email.'">
 	  		  	</td>
 	  		  </tr>
 	  		  <tr>
@@ -224,14 +237,70 @@ function get_customer_login($customer_tb,$customer_id) {
 	  		  		<span class="td-text">Password:</span>
 	  		  	</td>
 	  		  	<td>	  		  		
-	  		  		<input name="user_pass" type="password" id="user_pass" value="'.$user_info->data->user_pass.'">
-	  		  		<input type="button" value="Generate Password">
+	  		  		<input name="user_pass" type="password" id="user_pass" value="'.$user_info->data->user_pass.'" disabled>
 	  		  	</td>
 	  		  </tr>
+		  	  <tr>
+				  <td colspan="2" class="edit-footer">
+				  	<input type="submit" class="customer-button customer-edit-button" value="Save">
+				  </td>
+		  	  </tr>	  		  
 			</table>
 		</div>
+	  </form>
 	';
 
 	return $content;
 }
+
+function save_customer_info($save_data, $customer_tb) {
+	global $wpdb;
+	// Update user email address
+	$user_id = wp_update_user( array( 'ID' => $save_data['user_id'], 'user_email' => $save_data['user_email'] ));
+	// Insert new row in Customers Table
+	$customer_data = array();
+	$colNames = $wpdb->get_col("DESC {$customer_tb}", 0);
+	foreach ($colNames as $colname) {
+		if (isset($save_data[$colname]) && $save_data[$colname] !=null) {
+			$customer_data[$colname] = $save_data[$colname];
+		}
+	}
+	if (sizeof($customer_data) > 0) {
+		$wpdb->update($customer_tb,$customer_data,array('id'=>$save_data['customer_id']));
+	}
+	// Update User meta data for billing and shipping
+	foreach ($save_data as $key => $value) {
+		if (strpos($key,"billing_")==0 || strpos($key,"shipping_")==0) {
+			update_user_meta($save_data['user_id'],$key,$value);
+		}
+	}
+	return true;
+}
+
+function save_customer_login($save_data) {
+	global $wpdb;
+	$username = $save_data['user_login'];
+	// Check if user_login already exists before we force update
+	if ( ! username_exists( $username ) ) {
+
+		// Force update user_login and user_email
+		$tablename = $wpdb->prefix . "users";
+		$wpdb->update( $tablename, 						// Table to Update 	( prefix_users )
+					   array( 
+					   		'user_login' => $username,	// Data to Update 	( user_login )
+					   		'user_email' => $save_data['user_email'] 	// Data to Update 	( user_nicename )
+					   ),									
+					   array( 'ID' => $save_data['user_id'] ),			// WHERE clause 	( ID = $user->ID )
+					   array(
+					   		'%s',				// Data format 		( string )
+					   		'%s'				// Data format 		( string )
+					   	), 							
+					   array('%d') 					// Where Format 	( int )
+					);
+	}
+	
+	return true;
+}
+
+
 ?>

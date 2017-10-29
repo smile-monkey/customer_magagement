@@ -55,15 +55,13 @@ if (!class_exists(Customer_Management)){
 			 * Load CSS and JS files
 			 */
 			add_action('admin_init', array(&$this, 'Customer_Management_Init'));
-			// add_action( 'admin_enqueue_scripts', array(&$this, 'customer_enqueue' ));
 			
 			/**
 			 * Ajax define
 			 */
 			add_action( 'wp_ajax_show_list', array(&$this,'show_list'));
 			add_action( 'wp_ajax_save_customer_data', array(&$this,'save_customer_data'));
-			add_action( 'wp_ajax_show_customer_edit', array(&$this,'show_customer_edit'));
-			add_action( 'wp_ajax_show_customer_nav', array(&$this,'show_customer_nav'));
+			add_action( 'wp_ajax_save_customer_edit_data', array(&$this,'save_customer_edit_data'));
 
 		}
 		/**
@@ -77,7 +75,7 @@ if (!class_exists(Customer_Management)){
 						  `id` int(11) NOT NULL AUTO_INCREMENT,
 						  `user_id` int(11) DEFAULT NULL,
 						  `user_status` int(11) DEFAULT NULL COMMENT 'hold:0,active:1,inactive:2',
-						  `customer_type` varchar(255) COLLATE utf8mb4_unicode_520_ci DEFAULT NULL COMMENT 'retailer, business',
+						  `customer_type` varchar(255) COLLATE utf8mb4_unicode_520_ci DEFAULT NULL COMMENT 'Retailer, Business',
 						  `group_id` int(11) DEFAULT NULL,
 						  `company` varchar(255) COLLATE utf8mb4_unicode_520_ci DEFAULT NULL,
 						  `tax_number` varchar(255) COLLATE utf8mb4_unicode_520_ci DEFAULT NULL,
@@ -103,11 +101,11 @@ if (!class_exists(Customer_Management)){
 		        array( &$this, 'Customer_management_Main' ),
 		        PLUGINURL.'assets/images/menu-icon.png',
 		        56
-		    );			
+		    );
 		}
 
 		function customer_enqueue() {
-			wp_localize_script( 'ajax-script', 'ajax_object', array( 'ajaxurl' => admin_url( 'admin-ajax.php' ), 'we_value' => 1234 ) );
+			// var_dump(admin_url('admin.php?page=customer_management'));exit;
 		}
 		
 		function Customer_Management_Init() {
@@ -118,40 +116,45 @@ if (!class_exists(Customer_Management)){
 
 			wp_enqueue_script( 'customerManagement-js', PLUGINURL.'assets/js/customer.min.js');
 			wp_enqueue_style( 'customerManagement-css', PLUGINURL.'assets/css/customer.min.css');
+			wp_localize_script( 'customerManagement-js', 'ajax_object', array( 'ajaxurl' => admin_url( 'admin-ajax.php' ),'adminurl' => admin_url('admin.php?page=customer_management') ) );
 
 		}
 
 		function Customer_management_Main() {
+			$main_tab = $_GET['main_tab'];
+			$customer_id = $_GET['customer_id'];
+			if (isset($main_tab) && isset($customer_id)) {
+				$this->show_customer_edit ($main_tab, $customer_id);
+			}else {
 		?>
-		  <div class="customer-body">
-			<div class="customer-main">
-				<h1 class="main-title"><?php _e( 'Customer Management', 'customer_management_title' ); ?></h1>
-				<select id="customer_select" name="customer_select">
-					<option value="0" selected=true >--Add New--</option>
-					<option value="Customer">Customer</option>
-					<option value="Group">Group</option>
-				</select>
-			</div>
-			<div class="customer-list">
-				<ul>
-					<li id="customer_list" name="customer_list">Customer List</li>
-					<li id="group_list" name="group_list">Group List</li>
-					<li id="price_list" name="price_list">Price List</li>
-					<li id="payment_list" name="payment_list">Payment Terms</li>
-				</ul>
-			</div>
-			<div id="main_content" name="main_content">				
-			</div>
-		  </div>
-		  <div class="customer-add">
-		  	<?php $this->add_customer();?>
-		  </div>
-		  <div class="group-add">
-		  	<?php $this->add_group();?>
-		  </div>		  
-		  <div class="customer-edit">
-		  </div>		  
+			  <div class="customer-body">
+				<div class="customer-main">
+					<h1 class="main-title"><?php _e( 'Customer Management', 'customer_management_title' ); ?></h1>
+					<select id="customer_select" name="customer_select">
+						<option value="0" selected=true >--Add New--</option>
+						<option value="Customer">Customer</option>
+						<option value="Group">Group</option>
+					</select>
+				</div>
+				<div class="customer-list">
+					<ul>
+						<li id="customer_list" name="customer_list">Customer List</li>
+						<li id="group_list" name="group_list">Group List</li>
+						<li id="price_list" name="price_list">Price List</li>
+						<li id="payment_list" name="payment_list">Payment Terms</li>
+					</ul>
+				</div>
+				<div id="main_content" name="main_content">				
+				</div>
+			  </div>
+			  <div class="customer-add">
+			  	<?php $this->add_customer();?>
+			  </div>
+			  <div class="group-add">
+			  	<?php $this->add_group();?>
+			  </div>
 		<?php
+			}
 		}
 
 		function show_list() {
@@ -202,8 +205,7 @@ if (!class_exists(Customer_Management)){
 								<td>$0.00</td>
 								<td class="user_actions column-user_actions">
 								  <p>
-									<a class="button tips edit" href="#" data-cusotmer_id="'.$customer->id.'">Edit</a>
-									<a class="button tips view" href="#" data-cusotmer_id="'.$customer->id.'">View orders</a>
+									<a class="button tips edit" href="'.admin_url( 'admin.php?page=customer_management&main_tab=customer_info&customer_id='.$customer->id ).'">Edit</a>
 								  </p>
 								</td>
 							</tr>
@@ -241,7 +243,6 @@ if (!class_exists(Customer_Management)){
 							<td class="user_actions column-user_actions">
 							  <p>
 								<a class="button tips edit" href="#">Edit</a>
-								<a class="button tips view" href="#">View orders</a>
 							  </p>
 							</td>
 						</tr>
@@ -254,7 +255,6 @@ if (!class_exists(Customer_Management)){
 							<td class="user_actions column-user_actions">
 							  <p>
 								<a class="button tips edit" href="#">Edit</a>
-								<a class="button tips view" href="#">View orders</a>
 							  </p>
 							</td>
 						</tr>
@@ -281,8 +281,8 @@ if (!class_exists(Customer_Management)){
 		  		  <tr>
 	  				<td colspan="2">
 		  				<span class="td-text">Customer Type*</span>
-		  				<label for="Retailer" style="padding-right: 20px; padding-left: 4px;"><input type="radio" name="customer_type" value="retailer" checked>Retail Customer</label>
-		  				<label for="Business"><input type="radio" name="customer_type" value="business">Business Customer</label>
+		  				<label for="Retailer" style="padding-right: 20px; padding-left: 4px;"><input type="radio" name="customer_type" value="Retailer" checked>Retail Customer</label>
+		  				<label for="Business"><input type="radio" name="customer_type" value="Business">Business Customer</label>
 	  				</td>
 		  		  </tr>
 		  		  <tr>
@@ -357,16 +357,16 @@ if (!class_exists(Customer_Management)){
 		  		  	<td>
 		  		  		<span class="td-text" id="billing_title">Billing Address</span><br>
 		  		  		<input type="text" name="billing_address_1" id="billing_address_1" placeholder="Street Name"><br>
-		  		  		<input type="text" name="billing_address_2" id="billing_address_2" placeholder="Suburb"><br>
-		  		  		<input type="text" name="billing_city" id="billing_city" placeholder="State / Province"><br>
+		  		  		<input type="text" name="billing_city" id="billing_city" placeholder="Suburb"><br>
+		  		  		<input type="text" name="billing_state" id="billing_state" placeholder="State / Province"><br>
 		  		  		<input type="text" name="billing_postcode" id="billing_postcode" placeholder="Postal Code / Zip Code"><br>
 		  		  		<select name="billing_country" id="billing_country" class="country-select"><?php echo $country_options;?></select>		  		  		
 		  		  	</td>
 		  		  	<td id="shipping_data">
 		  		  		<span class="td-text">Shipping Address</span><br>
 		  		  		<input type="text" name="shipping_address_1" id="shipping_address_1" placeholder="Street Name"><br>
-		  		  		<input type="text" name="shipping_address_2" id="shipping_address_2" placeholder="Suburb"><br>
-		  		  		<input type="text" name="shipping_city" id="shipping_city" placeholder="State / Province"><br>
+		  		  		<input type="text" name="shipping_city" id="shipping_city" placeholder="Suburb"><br>
+		  		  		<input type="text" name="shipping_state" id="shipping_state" placeholder="State / Province"><br>
 		  		  		<input type="text" name="shipping_postcode" id="shipping_postcode" placeholder="Postal Code / Zip Code"><br>
 		  		  		<select name="shipping_country" id="shipping_country" class="country-select"><?php echo $country_options;?></select>
 		  		  	</td>
@@ -428,12 +428,40 @@ if (!class_exists(Customer_Management)){
 
 		}
 
-		function show_customer_edit() {
-			$customer_id = $_POST['customer_id'];
-			if ($customer_id) {
-				$customer_data = get_customer_data($this->_customer_tb,$customer_id);
-				$user_info = get_user_meta($customer_data->user_id);
-			?>
+		function show_customer_edit($main_tab, $customer_id) {
+
+			$customer_data = get_customer_data($this->_customer_tb,$customer_id);
+			$user_info = get_user_meta($customer_data->user_id);
+			$content = "";
+			$tab_active = array();
+			switch ($main_tab) {
+				case 'customer_info':
+					$content = get_customer_info($this->_customer_tb, $customer_id);
+					$tab_active[0] = 'nav-tab-active';
+					break;
+				case 'customer_transaction':
+					$content = get_customer_transaction($this->_customer_tb, $customer_id);
+					$tab_active[1] = 'nav-tab-active';
+					break;					
+				case 'customer_price':
+					$content = get_customer_price($this->_customer_tb, $customer_id);
+					$tab_active[2] = 'nav-tab-active';
+					break;					
+				case 'customer_delivery':
+					$content = get_customer_delivery($this->_customer_tb, $customer_id);
+					$tab_active[3] = 'nav-tab-active';
+					break;					
+				case 'customer_doc':
+					$content = get_customer_doc($this->_customer_tb, $customer_id);
+					$tab_active[4] = 'nav-tab-active';
+					break;
+				case 'customer_login':
+					$content = get_customer_login($this->_customer_tb, $customer_id);
+					$tab_active[5] = 'nav-tab-active';
+					break;
+			}
+		?>
+			<div class="customer-edit">
 			  <div class="add-header">
 			  	<img src="<?php echo plugins_url( '/assets/images/customer-icon.png' , __FILE__ );?>">
 			  	<h1><?php echo $user_info['first_name'][0]." ".$user_info['last_name'][0]." / ".$customer_data->company;?></h1>
@@ -443,58 +471,33 @@ if (!class_exists(Customer_Management)){
 				</select>			  	
 			  </div>
 			  <nav class="nav-tab-wrapper woo-nav-tab-wrapper customer_edit_nav">
-				<a href="#" class="nav-tab nav-tab-active " id="customer_info" name="customer_info">Personal Information</a>
-				<a href="#" class="nav-tab" id="customer_transaction" name="customer_transaction">Transactions</a>
-				<a href="#" class="nav-tab" id="customer_price" name="customer_price">Price List</a>
-				<a href="#" class="nav-tab" id="customer_delivery" name="customer_delivery">Delivery</a>
-				<a href="#" class="nav-tab" id="customer_doc" name="customer_doc">Documents</a>
-				<a href="#" class="nav-tab" id="customer_login" name="customer_login">Login Credentials</a>
+		<?php echo '
+				<a href="'.admin_url( 'admin.php?page=customer_management&main_tab=customer_info&customer_id='.$customer_id ).'"  class="nav-tab '.$tab_active[0].'">Personal Information</a>
+				<a href="'.admin_url( 'admin.php?page=customer_management&main_tab=customer_transaction&customer_id='.$customer_id ).'"  class="nav-tab '.$tab_active[1].'">Transactions</a>
+				<a href="'.admin_url( 'admin.php?page=customer_management&main_tab=customer_price&customer_id='.$customer_id ).'"  class="nav-tab '.$tab_active[2].'">Price List</a>
+				<a href="'.admin_url( 'admin.php?page=customer_management&main_tab=customer_delivery&customer_id='.$customer_id ).'"  class="nav-tab '.$tab_active[3].'">Delivery</a>
+				<a href="'.admin_url( 'admin.php?page=customer_management&main_tab=customer_doc&customer_id='.$customer_id ).'"  class="nav-tab '.$tab_active[4].'">Documents</a>
+				<a href="'.admin_url( 'admin.php?page=customer_management&main_tab=customer_login&customer_id='.$customer_id ).'"  class="nav-tab '.$tab_active[5].'">Login Credentials</a>
 			  </nav>
-			  <div class="customer-edit-body">
-			  	<?php echo $this->get_customer_nav($customer_id,'customer_info');?>
-			  </div>
-			<?php
-
-			}else {
-				echo "Customer Loading Error!";
-			}
-
+			  <div class="customer-edit-body">'.$content.'</div>
+			</div>';
 			die();
 		}
 
-		function show_customer_nav() {
-			$customer_id = $_POST['customer_id'];
-			$nav_id = $_POST['nav_id'];
-			echo $this->get_customer_nav($customer_id,$nav_id);
-			exit();
-		}
+		function save_customer_edit_data() {
+			global $wpdb;
+			$save_data = array();
 
-		function get_customer_nav($customer_id,$nav_id) {
-			$content = "";
-			switch ($nav_id) {
+			parse_str($_POST['form_data'], $save_data);
+			switch ($save_data['main_tab']) {
 				case 'customer_info':
-					$content = get_customer_info($this->_customer_tb, $customer_id);
-					break;
-				case 'customer_transaction':
-					$content = get_customer_transaction($this->_customer_tb, $customer_id);
-					break;					
-				case 'customer_price':
-					$content = get_customer_price($this->_customer_tb, $customer_id);
-					break;					
-				case 'customer_delivery':
-					$content = get_customer_delivery($this->_customer_tb, $customer_id);
-					break;					
-				case 'customer_doc':
-					$content = get_customer_doc($this->_customer_tb, $customer_id);
+					save_customer_info($save_data, $this->_customer_tb);
 					break;
 				case 'customer_login':
-					$content = get_customer_login($this->_customer_tb, $customer_id);
-					break;					
-				default:
-					$content = get_customer_info($this->_customer_tb, $customer_id);
+					save_customer_login($save_data);
 					break;
-			}
-			return $content;
+			}			
+			exit("ok");
 		}
 	}
 }
