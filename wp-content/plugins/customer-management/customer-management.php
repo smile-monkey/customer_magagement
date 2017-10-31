@@ -76,7 +76,7 @@ if (!class_exists(Customer_Management)){
 						  `user_id` int(11) DEFAULT NULL,
 						  `user_status` int(11) DEFAULT NULL COMMENT 'hold:0,active:1,inactive:2',
 						  `customer_type` varchar(255) COLLATE utf8mb4_unicode_520_ci DEFAULT NULL COMMENT 'Retailer, Business',
-						  `group_id` int(11) DEFAULT NULL,
+						  `group_id` varchar(255) COLLATE utf8mb4_unicode_520_ci DEFAULT NULL,
 						  `company` varchar(255) COLLATE utf8mb4_unicode_520_ci DEFAULT NULL,
 						  `tax_number` varchar(255) COLLATE utf8mb4_unicode_520_ci DEFAULT NULL,
 						  `phone` varchar(255) COLLATE utf8mb4_unicode_520_ci DEFAULT NULL,

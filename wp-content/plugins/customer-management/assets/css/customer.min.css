@@ -1,17 +1,17 @@
 /* Main Page Style */
 
 .main-title {
-	font-size: 32px !important;
-	font-weight: 600 !important;
-	display: inline-block;
+    font-size: 32px !important;
+    font-weight: 600 !important;
+    display: inline-block;
 }
 #customer_select {
-	float: right;
-	margin: 18px;
+    float: right;
+    margin: 18px;
 }
 .customer-list ul {
-	white-space:nowrap;
-	margin-top: 0px;
+    white-space:nowrap;
+    margin-top: 0px;
 }
 .customer-list li {
     display: inline-block;
@@ -23,14 +23,14 @@
     cursor: pointer;
 }
 .customer-list li:last-child {
-	border-right: 0px;
+    border-right: 0px;
 }
 .list-selected {
-	color: #cc4f1e;
+    color: #cc4f1e;
 }
 #main_content {
-	margin-left: 20px;
-	margin-right: 20px;
+    margin-left: 20px;
+    margin-right: 20px;
 }
 .customer-table td:first-child {
     width: 15%;
@@ -39,12 +39,12 @@
     width: 20%;
 }
 .customer-table thead > tr > td {
-	vertical-align: middle;
+    vertical-align: middle;
 }
 
 /* Add Customer, Group or View Customer */
 .customer-add, .group-add, .customer-edit {
-	margin: 20px;
+    margin: 20px;
     padding: 20px;
     padding-left: 40px;
     border: 1px solid #E5E5E5;
@@ -54,10 +54,10 @@
     display: none;
 }
 .add-header {
-	height: 80px;
+    height: 80px;
 }
 .add-header img {
-	float: left;
+    float: left;
     width: 50px;
 }
 .add-header h1 {
@@ -68,27 +68,27 @@
     color: #9d9fa2;
 }
 .td-text{
-	font-weight: 600;
+    font-weight: 600;
     font-size: 14px;
     color: #000;
     padding-right: 50px;
     vertical-align: middle;
 }
 .add_form_table tr > td {
-	padding-bottom: 20px;
+    padding-bottom: 20px;
 }
 .multi-switch {
-	width: 70px;
+    width: 70px;
     padding-left: 15px;
 }
 .add_form_table input[type=text], .add_form_table input[type=email], .add_form_table input[type=password] {
-	width: 200px;
-	margin-right: 70px;
-	margin-top: 10px;
+    width: 200px;
+    margin-right: 70px;
+    margin-top: 10px;
 }
 .country-select {
-	margin-top: 10px;
-	width: 200px;
+    margin-top: 10px;
+    width: 200px;
 }
 .customer-button {
     width: 150px;

@@ -1,7 +1,7 @@
 jQuery(function ($) {
-	$(document).ready(function(){
-		$("#customer_list").trigger('click');	
 
+	$(document).ready(function(){
+		$("#customer_list").trigger('click');
 	});
 
 	$(".customer-list li").on("click",function(e){
@@ -19,7 +19,6 @@ jQuery(function ($) {
 			data: data,
 			success: function(response){
 				$("#main_content").html(response);
-				show_customer_edit();
 			},
 			error: function(XMLHttpRequest, textStatus, errorThrown) {
 
@@ -51,11 +50,8 @@ jQuery(function ($) {
 		$(".customer-body").show();
 		$(".customer-add").hide();
 		$(".group-add").hide();
+		$("#customer_select").val(0);
 	});
-
-	// $(".customer-body").hide();
-	// $(".customer-add").show();
-	// $(".group-add").hide();
 
 	$("#shipping_chk_box").on("change", function(){
 		if(this.checked) {
@@ -70,6 +66,7 @@ jQuery(function ($) {
 			$("#shipping_check").val(0);
 		}
 	});
+
 	$("#save_new_btn").on("click", function(e){
 		e.preventDefault();
 		var form_data = $("#add_form").serialize();
@@ -82,7 +79,7 @@ jQuery(function ($) {
 			url: ajaxurl,
 			data: data,
 			success: function(response){
-				// window.location.reload();
+				window.location.reload();
 			},
 			error: function(XMLHttpRequest, textStatus, errorThrown) {
 
@@ -90,64 +87,30 @@ jQuery(function ($) {
 		});
 	});
 
-	function show_customer_edit() {
-		$(".customer-table .edit").on("click",function(e){
-			e.preventDefault();
-			$(".customer-edit").show();
-			$(".customer-body").hide();
+	$("#customer_edit_select").on("change", function(e){
+		if (e.target.value == "view") {
+			window.location = ajax_object.adminurl;
+		}
+	});
 
-			var customer_id = $(this).attr("data-cusotmer_id");
-			var data = {
-				action: "show_customer_edit",
-				customer_id: customer_id
-			};
-			$.ajax({
-				type: "POST",
-				url: ajaxurl,
-				data: data,
-				success: function(response){
-					$(".customer-edit").html(response);
-					show_customer_nav(customer_id);
-				},
-				error: function(XMLHttpRequest, textStatus, errorThrown) {
+	$(".customer-edit-button").on("click", function(e){
+		e.preventDefault();
+		var form_data = $(".customer-edit-data").serialize();
+		var data = {
+			action: "save_customer_edit_data",
+			form_data: form_data
+		};
+		$.ajax({
+			type: "POST",
+			url: ajaxurl,
+			data: data,
+			success: function(response){
+				window.location.reload();
+			},
+			error: function(XMLHttpRequest, textStatus, errorThrown) {
 
-				}
-			});			
-		});
-
-		$(".customer-table .view").on("click",function(e){
-			// e.preventDefault();
-			console.log($(this).attr("data-cusotmer_id"));
-		});
-	}
-
-	function show_customer_nav(customer_id) {
-		$(".customer_edit_nav .nav-tab").on("click", function(e){
-			$(".customer_edit_nav .nav-tab").removeClass("nav-tab-active");
-			$(this).addClass("nav-tab-active");
-			var data = {
-				action: "show_customer_nav",
-				customer_id: customer_id,
-				nav_id: e.target.id
-			};
-			$.ajax({
-				type: "POST",
-				url: ajaxurl,
-				data: data,
-				success: function(response){
-					$(".customer-edit-body").html(response);
-				},
-				error: function(XMLHttpRequest, textStatus, errorThrown) {
-
-				}
-			});			
-		});
-
-		$("#customer_edit_select").on("change", function(e){
-			if (e.target.value == "view") {
-				$(".customer-edit").hide();
-				$(".customer-body").show();				
 			}
-		});
-	}
+		});		
+	});
+
 });

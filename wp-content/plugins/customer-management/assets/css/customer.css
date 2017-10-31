@@ -49,6 +49,8 @@
     padding-left: 40px;
     border: 1px solid #E5E5E5;
     background: #fff;
+}
+.customer-add, .group-add {
     display: none;
 }
 .add-header {
@@ -98,7 +100,7 @@
     border-radius: 5px;
     cursor: pointer;
 }
-#save_new_btn {
+#save_new_btn, .customer-edit-button {
     background-color: #12af0a;
     background-image: url(../../assets/images/check-symbol.png);
     background-repeat: no-repeat;
@@ -107,12 +109,7 @@
     background-size: 28px;
     padding-left: 30px;
 }
-/*.customer-edit {
-    display: block;
-}
-.customer-body {
-    display: none;
-}*/
+
 /* Customer Edit Page */
 #customer_edit_select {
     float: right;
@@ -123,5 +120,11 @@
 }
 .customer-edit-body {
     margin: 35px;
-    min-height: 500px;
+    min-height: 550px;
+}
+.customer-edit-body form {
+    display: flex;
+}
+.account-status-box .multi-switch {
+    padding-left: 0px;
 }

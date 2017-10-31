@@ -24,16 +24,18 @@ function get_country_options($selected_country=null) {
 
     return $country_options;
 }
-
+/*
+ * integrate with WooCommerce Dynamic Pricing
+ */
 function get_group_options($selected_group=null) {
 
-	$group_list = array('1'=>'group1','2'=>'group2','3'=>'group3');
+	$pricing_group_info = get_option( '_a_totals_pricing_rules', array() );
 
-	if (sizeof($group_list) > 0) {
+	if (sizeof($pricing_group_info) > 0) {
 		$group_options = $selected = '';
-		foreach ($group_list as $key => $group) {
+		foreach ($pricing_group_info as $key => $group) {
 			$selected = $key==$selected_group ? 'selected="selected"' : '';
-			$group_options .= "<option value='".$key."' ".$selected.">".$group."</option>";
+			$group_options .= "<option value='".$key."' ".$selected.">".$group['admin_title']."</option>";
 		}
 	}else {
 		$group_options = '<option value="" selected="selected">Select a group…</option>';
@@ -124,18 +126,18 @@ function get_customer_info($customer_tb,$customer_id) {
   		  <tr>
   		  	<td>
   		  		<span class='td-text'>Billing Address</span><br>
-  		  		<input type='text' name='billing_address_1' id='billing_address_1' value='".$user_meta_info['billing_address_1'][0]."'><br>
-  		  		<input type='text' name='billing_city' id='billing_city' value='".$user_meta_info['billing_city'][0]."'><br>
-  		  		<input type='text' name='billing_state' id='billing_state' value='".$user_meta_info['billing_state'][0]."'><br>
-  		  		<input type='text' name='billing_postcode' id='billing_postcode' value='".$user_meta_info['billing_postcode'][0]."'><br>
+  		  		<input type='text' name='billing_address_1' id='billing_address_1' value='".$user_meta_info['billing_address_1'][0]."' placeholder='Street Name'><br>
+  		  		<input type='text' name='billing_city' id='billing_city' value='".$user_meta_info['billing_city'][0]."' placeholder='Suburb'><br>
+  		  		<input type='text' name='billing_state' id='billing_state' value='".$user_meta_info['billing_state'][0]."' placeholder='State / Province'><br>
+  		  		<input type='text' name='billing_postcode' id='billing_postcode' value='".$user_meta_info['billing_postcode'][0]."' placeholder='Postal Code / Zip Code'><br>
   		  		<select name='billing_country' id='billing_country' class='country-select'>".$billing_countries."</select>		  		  		
   		  	</td>
   		  	<td id='shipping_data'>
   		  		<span class='td-text'>Shipping Address</span><br>
-  		  		<input type='text' name='shipping_address_1' id='shipping_address_1' value='".$user_meta_info['shipping_address_1'][0]."'><br>
-  		  		<input type='text' name='shipping_city' id='shipping_city' value='".$user_meta_info['shipping_city'][0]."'><br>
-  		  		<input type='text' name='shipping_state' id='shipping_state' value='".$user_meta_info['shipping_state'][0]."'><br>
-  		  		<input type='text' name='shipping_postcode' id='shipping_postcode' value='".$user_meta_info['shipping_postcode'][0]."'><br>
+  		  		<input type='text' name='shipping_address_1' id='shipping_address_1' value='".$user_meta_info['shipping_address_1'][0]."' placeholder='Street Name'><br>
+  		  		<input type='text' name='shipping_city' id='shipping_city' value='".$user_meta_info['shipping_city'][0]."' placeholder='Suburb'><br>
+  		  		<input type='text' name='shipping_state' id='shipping_state' value='".$user_meta_info['shipping_state'][0]."' placeholder='State / Province'><br>
+  		  		<input type='text' name='shipping_postcode' id='shipping_postcode' value='".$user_meta_info['shipping_postcode'][0]."' placeholder='Postal Code / Zip Code'><br>
   		  		<select name='shipping_country' id='shipping_country' class='country-select'>".$shipping_countries."</select>
   		  	</td>
   		  </tr>
