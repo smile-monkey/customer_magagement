@@ -44,20 +44,6 @@ function get_group_options($selected_group=null) {
 	return $group_options;
 }
 
-function get_customer_list($customer_tb) {
-	global $wpdb;
-	$customer_list = $wpdb->get_results("select * from `".$customer_tb."`");
-	return $customer_list;
-}
-/*
- * Customer Data Class Object
- */
-function get_customer_data($customer_tb,$customer_id) {
-	global $wpdb;
-	$customer_data = $wpdb->get_row($wpdb->prepare("select * from `".$customer_tb."` where `id`= %d", $customer_id));
-	return $customer_data;
-}
-
 function get_customer_info($customer_tb,$customer_id) {
 	$customer_data = get_customer_data($customer_tb,$customer_id);
 	$user_meta_info = get_user_meta($customer_data->user_id);
@@ -189,11 +175,46 @@ function get_customer_delivery($customer_tb, $customer_id) {
 
 function get_customer_doc($customer_tb, $customer_id) {
 	$content = '
-		<div>
-			<h1>Documents</h1>
+		<div style="height:65px;">
+			<div style="float:left;">
+				<h1>Documents</h1>
+			</div>
+			<div style="float:right;margin-top: 10px;">
+				<input type="text" name="search_box" id="search_box">
+				<input type="button" name="search_btn" id="search_btn" class="document-button" value="Search">
+				<input type="button" name="doc_btn" id="doc_btn" class="document-button" value="Add New Doc">
+				<input type="hidden" name="customer_id" id="customer_id" value="'.$customer_id.'">
+			</div>			
 		</div>
-		<div>
-
+		<div id="doc_body">'.get_doc_body().'
+		</div>
+		<div class="popup_background"></div>
+		<div id="popup_form">
+		  <h1>Upload New Documents</h1>
+		  <form id="doc_form">
+		  	<table>
+		  	  <tr>
+	  			<td><span class="td-text">Document Name:</span></td>
+	  			<td><input type="text" id="doc_name" name="doc_name"></td>
+		  	  </tr>
+		  	  <tr>
+		  		<td><span class="td-text">Upload Document:</span></td>
+		  		<td>
+		  			<input type="text" id="file_path" name="file_path" disabled>
+			  		<div class="file-wrapper">
+						<input type="file" id="doc_file" name="doc_file" accept=".doc, .docx, .pdf" multiple="" onchange="select_file(this.files);">
+						<span class="button">Upload</span>
+					</div>
+				</td>
+		  	  </tr>
+		  	  <tr style="text-align:center;">
+		  	  	<td colspan="2">
+		  	  		<input type="button" name="doc_cancel_btn" id="doc_cancel_btn" class="document-button" value="Cancel">
+		  	  		<input type="button" name="doc_save_btn" id="doc_save_btn" class="document-button customer-save-btn" value="Save">
+		  	  	</td>
+		  	  </tr>
+		  	</table>
+		  </form>
 		</div>
 	';
 	return $content;
@@ -255,54 +276,19 @@ function get_customer_login($customer_tb,$customer_id) {
 	return $content;
 }
 
-function save_customer_info($save_data, $customer_tb) {
-	global $wpdb;
-	// Update user email address
-	$user_id = wp_update_user( array( 'ID' => $save_data['user_id'], 'user_email' => $save_data['user_email'] ));
-	// Insert new row in Customers Table
-	$customer_data = array();
-	$colNames = $wpdb->get_col("DESC {$customer_tb}", 0);
-	foreach ($colNames as $colname) {
-		if (isset($save_data[$colname]) && $save_data[$colname] !=null) {
-			$customer_data[$colname] = $save_data[$colname];
-		}
-	}
-	if (sizeof($customer_data) > 0) {
-		$wpdb->update($customer_tb,$customer_data,array('id'=>$save_data['customer_id']));
-	}
-	// Update User meta data for billing and shipping
-	foreach ($save_data as $key => $value) {
-		if (strpos($key,"billing_")==0 || strpos($key,"shipping_")==0) {
-			update_user_meta($save_data['user_id'],$key,$value);
-		}
-	}
-	return true;
+function get_doc_body($search_key=null) {
+	$content = '<table class="widefat striped doc-table">
+		<thead>
+			<tr>
+				<td>Upload Date</td>
+				<td>Document Name</td>
+				<td>File</td>
+				<td>Action</td>
+			</tr>
+		</thead>
+	</table>';
+
+	return $content;
 }
-
-function save_customer_login($save_data) {
-	global $wpdb;
-	$username = $save_data['user_login'];
-	// Check if user_login already exists before we force update
-	if ( ! username_exists( $username ) ) {
-
-		// Force update user_login and user_email
-		$tablename = $wpdb->prefix . "users";
-		$wpdb->update( $tablename, 						// Table to Update 	( prefix_users )
-					   array( 
-					   		'user_login' => $username,	// Data to Update 	( user_login )
-					   		'user_email' => $save_data['user_email'] 	// Data to Update 	( user_nicename )
-					   ),									
-					   array( 'ID' => $save_data['user_id'] ),			// WHERE clause 	( ID = $user->ID )
-					   array(
-					   		'%s',				// Data format 		( string )
-					   		'%s'				// Data format 		( string )
-					   	), 							
-					   array('%d') 					// Where Format 	( int )
-					);
-	}
-	
-	return true;
-}
-
 
 ?>

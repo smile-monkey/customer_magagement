@@ -28,7 +28,8 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 
 define( 'PLUGINURL', plugin_dir_url( __FILE__ ) );
 
-include_once (__DIR__ . '/functions.php');
+include_once (__DIR__ . '/includes/functions.php');
+include_once (__DIR__ . '/includes/database.php');
 
 if (!class_exists(Customer_Management)){
 	/**
@@ -37,15 +38,17 @@ if (!class_exists(Customer_Management)){
 	class Customer_Management
 	{
 		public $_customer_tb;
+		public $_customer_doc_tb;
 
 		function __construct()
 		{
 			global $wpdb;
 			$this->_customer_tb = $wpdb->prefix."woocommerce_customers";
+			$this->_customer_doc_tb = $wpdb->prefix."woocommerce_customers_doc";
 			/**
 			 * Create a table for customer management.
 			 */
-			register_activation_hook( __FILE__,array( &$this,'register_database'));			
+			register_activation_hook( __FILE__, array(&$this, 'register_database'));			
 			/**
 			 * Add sub menu page to menu
 			 */
@@ -60,34 +63,14 @@ if (!class_exists(Customer_Management)){
 			 * Ajax define
 			 */
 			add_action( 'wp_ajax_show_list', array(&$this,'show_list'));
-			add_action( 'wp_ajax_save_customer_data', array(&$this,'save_customer_data'));
+			add_action( 'wp_ajax_save_customer_data', array(&$this, 'save_customer_data'));
 			add_action( 'wp_ajax_save_customer_edit_data', array(&$this,'save_customer_edit_data'));
+			add_action( 'wp_ajax_upload_doc_data', array(&$this,'upload_doc_data'));
 
 		}
-		/**
-		 * Create a table for customer management.
-		 */
-		function register_database() {
-			global $wpdb;
 
-			try {
-				$query = "CREATE TABLE IF NOT EXISTS`".$this->_customer_tb."` (
-						  `id` int(11) NOT NULL AUTO_INCREMENT,
-						  `user_id` int(11) DEFAULT NULL,
-						  `user_status` int(11) DEFAULT NULL COMMENT 'hold:0,active:1,inactive:2',
-						  `customer_type` varchar(255) COLLATE utf8mb4_unicode_520_ci DEFAULT NULL COMMENT 'Retailer, Business',
-						  `group_id` varchar(255) COLLATE utf8mb4_unicode_520_ci DEFAULT NULL,
-						  `company` varchar(255) COLLATE utf8mb4_unicode_520_ci DEFAULT NULL,
-						  `tax_number` varchar(255) COLLATE utf8mb4_unicode_520_ci DEFAULT NULL,
-						  `phone` varchar(255) COLLATE utf8mb4_unicode_520_ci DEFAULT NULL,
-						  `mobile` varchar(255) COLLATE utf8mb4_unicode_520_ci DEFAULT NULL,
-						  `shipping_check` int(11) DEFAULT NULL COMMENT '0 or 1',
-						  PRIMARY KEY (`id`)
-						) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_520_ci";
-				$wpdb->query($query);
-			} catch (Exception $e) {
-				echo $e;
-			}			
+		function register_database() {
+			create_customer_table($this->_customer_tb, $this->_customer_doc_tb);
 		}
 		/**
 		 * Display Customer Management Plugin Menu
@@ -102,10 +85,6 @@ if (!class_exists(Customer_Management)){
 		        PLUGINURL.'assets/images/menu-icon.png',
 		        56
 		    );
-		}
-
-		function customer_enqueue() {
-			// var_dump(admin_url('admin.php?page=customer_management'));exit;
 		}
 		
 		function Customer_Management_Init() {
@@ -389,45 +368,6 @@ if (!class_exists(Customer_Management)){
 			$this->add_customer();
 		}
 
-		function save_customer_data() {
-
-			global $wpdb;
-			$save_data = array();
-
-			parse_str($_POST['form_data'],$save_data);
-
-			// create new user
-			$user_id = username_exists( $save_data['user_login'] );
-			if ( !$user_id and email_exists($save_data['user_email']) == false ) {
-
-				// $save_data['user_pass'] = md5($save_data['user_pass']);
-				$save_data['user_id'] = wp_insert_user( $save_data);
-
-				// Insert new row in Customers Table
-				$customer_data = array();
-				$colNames = $wpdb->get_col("DESC {$this->_customer_tb}", 0);
-				foreach ($colNames as $colname) {
-					if (isset($save_data[$colname]) && $save_data[$colname] !=null) {
-						$customer_data[$colname] = $save_data[$colname];
-					}
-				}
-				if (sizeof($customer_data) > 0) {
-					$wpdb->insert($this->_customer_tb,$customer_data);
-				}
-				// Add User meta data for billing and shipping
-				foreach ($save_data as $key => $value) {
-					if (strpos($key,"billing_")==0 || strpos($key,"shipping_")==0) {
-						update_user_meta($save_data['user_id'],$key,$value);
-					}
-				}
-			} else {
-				echo "User already exists.";
-			}
-			
-			exit("ok");
-
-		}
-
 		function show_customer_edit($main_tab, $customer_id) {
 
 			$customer_data = get_customer_data($this->_customer_tb,$customer_id);
@@ -484,6 +424,11 @@ if (!class_exists(Customer_Management)){
 			die();
 		}
 
+		function save_customer_data() {
+			save_customer_new($this->_customer_tb);
+			exit("ok");
+		}
+
 		function save_customer_edit_data() {
 			global $wpdb;
 			$save_data = array();
@@ -499,11 +444,17 @@ if (!class_exists(Customer_Management)){
 			}			
 			exit("ok");
 		}
+
+		function upload_doc_data() {
+			$save_data = array();
+			$customer_id = $_POST['customer_id'];
+			parse_str($_POST['form_data'],$save_data);
+			$doc_file = $_FILES['doc_file'];
+			var_dump($customer_id);exit;
+		}
 	}
 }
 
 $customerManagement = new Customer_Management();
-
-
 
 ?>
