@@ -8,12 +8,16 @@
  * Create a table for customer management.
  */
 
-function create_customer_table($customer_main_tb, $customer_doc_tb) {
+global $wpdb;
+define("customer_tb", $wpdb->prefix."woocommerce_customers");
+define("customer_doc_tb", $wpdb->prefix."woocommerce_customers_doc");
+
+function create_customer_table() {
 
 	global $wpdb;
 
 	try {
-		$query = "CREATE TABLE IF NOT EXISTS`".$customer_main_tb."` (
+		$query = "CREATE TABLE IF NOT EXISTS`".customer_tb."` (
 				  `id` int(11) NOT NULL AUTO_INCREMENT,
 				  `user_id` int(11) DEFAULT NULL,
 				  `user_status` int(11) DEFAULT NULL COMMENT 'hold:0,active:1,inactive:2',
@@ -28,10 +32,9 @@ function create_customer_table($customer_main_tb, $customer_doc_tb) {
 				) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_520_ci";
 		$wpdb->query($query);
 
-		$query = "CREATE TABLE IF NOT EXISTS`".$customer_doc_tb."` (
+		$query = "CREATE TABLE IF NOT EXISTS`".customer_doc_tb."` (
 				  `id` int(11) NOT NULL AUTO_INCREMENT,
 				  `customer_id` int(11) DEFAULT NULL,
-				  `doc_name` varchar(255) COLLATE utf8mb4_unicode_520_ci DEFAULT NULL COMMENT 'document name',
 				  `post_id` int(11) DEFAULT NULL,
 				  PRIMARY KEY (`id`)
 				) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_520_ci";
@@ -42,23 +45,24 @@ function create_customer_table($customer_main_tb, $customer_doc_tb) {
 	}			
 }
 
-function get_customer_list($customer_tb) {
+function get_customer_list() {
 	global $wpdb;
-	$customer_list = $wpdb->get_results("select * from `".$customer_tb."`");
+	$customer_list = $wpdb->get_results("select * from `".customer_tb."`");
 	return $customer_list;
 }
 
 /*
  * Customer Data Class Object
  */
-function get_customer_data($customer_tb,$customer_id) {
+function get_customer_data($customer_id) {
 	global $wpdb;
-	$customer_data = $wpdb->get_row($wpdb->prepare("select * from `".$customer_tb."` where `id`= %d", $customer_id));
+	$customer_data = $wpdb->get_row($wpdb->prepare("select * from `".customer_tb."` where `id`= %d", $customer_id));
 	return $customer_data;
 }
 
-function save_customer_info($save_data, $customer_tb) {
+function save_customer_info($save_data) {
 	global $wpdb;
+	$customer_tb = customer_tb;
 	// Update user email address
 	$user_id = wp_update_user( array( 'ID' => $save_data['user_id'], 'user_email' => $save_data['user_email'] ));
 	// Insert new row in Customers Table
@@ -106,7 +110,7 @@ function save_customer_login($save_data) {
 	return true;
 }
 
-function save_customer_new($customer_db) {
+function save_customer_new() {
 
 	global $wpdb;
 	$save_data = array();
@@ -116,7 +120,7 @@ function save_customer_new($customer_db) {
 	// create new user
 	$user_id = username_exists( $save_data['user_login'] );
 	if ( !$user_id and email_exists($save_data['user_email']) == false ) {
-
+		$customer_db = customer_tb;
 		// $save_data['user_pass'] = md5($save_data['user_pass']);
 		$save_data['user_id'] = wp_insert_user( $save_data);
 
@@ -140,7 +144,131 @@ function save_customer_new($customer_db) {
 	} else {
 		echo "User already exists.";
 	}
-
+	exit("ok");
 }
 
+function get_doc_body($customer_id, $search_key=null) {
+	$doc_body = '';
+	global $wpdb;
+	try {
+		$query = 'SELECT d.`id`,p.`post_date`, p.`post_title`, p.`guid`, m.`meta_value` FROM `'.customer_doc_tb.'` AS d
+					JOIN `'.$wpdb->prefix.'posts` AS p ON d.`post_id`=p.`ID`
+					JOIN `'.$wpdb->prefix.'postmeta` AS m ON p.`ID`=m.`post_id`
+					where d.`customer_id`= '.$customer_id.'
+				  ';
+		if ($search_key){
+			$query .= ' AND (p.`post_title` like "%'.$search_key.'%" OR m.`meta_value` like "%'.$search_key.'%" OR p.`post_date` like "%'.$search_key.'%") ';
+		}
+		$doc_data = $wpdb->get_results($query);
+		if (sizeof($doc_data) > 0) {
+			foreach ($doc_data as $doc) {
+				$doc_name = explode('/', $doc->meta_value);
+				$doc_name = $doc_name[count($doc_name)-1];
+				$doc_body .= '<tr>
+					<td>'.$doc->post_date.'</td>
+					<td>'.$doc->post_title.'</td>
+					<td><a href="'.$doc->guid.'">'.$doc_name.'</a></td>
+					<td class="doc-action-icons">
+						<a class="dashicons dashicons-trash" title="Delete" id="delete_'.$doc->id.'"></a>
+						<a class="dashicons dashicons-migrate" title="Send an Email" id="send_'.$doc->id.'"></a>
+					</td>
+				</tr>';
+			}
+		} else {
+			$doc_body .= '<tr style="text-align:center;"><td colspan="4">No Results</td></tr>';
+		}
+	} catch (Exception $e) {
+		echo $e;
+	}
+	return $doc_body;
+}
+
+function delete_customer_document($doc_id) {
+    global $wpdb;
+    $table_name = $wpdb->prefix . 'customtable';
+    try {
+    	$row = $wpdb->get_results( $wpdb->prepare( "SELECT post_id FROM ".customer_doc_tb." WHERE id = %d", $doc_id));
+    	$doc_post_id = $row[0]->post_id;
+    	if ($doc_post_id) {
+    		wp_delete_post($doc_post_id);
+    	}
+    	$wpdb->query( $wpdb->prepare( "DELETE FROM ".customer_doc_tb." WHERE id = %d", $doc_id));
+
+    } catch (Exception $e) {
+    	echo $e;
+    }
+}
+
+function send_customer_document($doc_id) {
+	global $wpdb;
+    try {
+    	$row = $wpdb->get_results( $wpdb->prepare( "SELECT c.`user_id`, d.`post_id` FROM `wp_woocommerce_customers` AS c JOIN `wp_woocommerce_customers_doc` AS d ON c.`id` = d.`customer_id` WHERE d.`id` = %d", $doc_id));
+    	$user_id = $row[0]->user_id;
+    	$post_id = $row[0]->post_id;
+    	if ($user_id){
+
+    		$user_data = get_userdata($user_id);
+    		$to = $user_data->data->user_email;
+			 
+			// Email subject and body text.
+			$subject = get_the_title($post_id);
+			$message = "";
+			$headers = array("Content-Type: text/html; charset=UTF-8");
+			$attachment_path = get_post_meta($post_id, "_wp_attached_file");
+			$attachments = array( WP_CONTENT_DIR . "/uploads/". $attachment_path[0]);
+			 
+			// send test message using wp_mail function.
+			$sent_message = wp_mail( $to, $subject, $message, $headers ,$attachments );
+			//display message based on the result.
+			if ( $sent_message ) {
+			    // The message was sent.
+			    echo "ok";
+			} else {
+			    // The message was not sent.
+			    echo "error";
+			}
+    	}
+
+    } catch (Exception $e) {
+    	echo $e;
+    }	
+}
+
+
+if(isset($_POST['doc_save_btn'])) {
+	$save_data = $_POST;
+	$doc_file_name = $_FILES['doc_file']['name'];
+	$doc_file_path = $_FILES['doc_file']['tmp_name'];
+
+	include_once(ABSPATH . 'wp-includes/pluggable.php'); 
+	$upload_file = wp_upload_bits($doc_file_name, null, $doc_file_path);
+
+	if ( $upload['error'] ) {
+		$error = new WP_Error( 'document_upload', __( 'Error uploading document:', 'customer-document' ) . ' ' . $upload['error'] );
+		return $error;
+	} else {
+		$wp_filetype = wp_check_filetype($doc_file_name, null );
+		$attachment = array(
+			'post_mime_type' => $wp_filetype['type'],
+			'guid' => $upload_file['url'],
+			'post_title' => preg_replace('/\.[^.]+$/', '', $save_data['doc_name']),
+			'post_content' => '',
+			'post_status' => 'inherit'
+		);
+		$attachment_id = wp_insert_attachment( $attachment, $upload_file['file'] );
+		if (!is_wp_error($attachment_id)) {
+			require_once(ABSPATH . "wp-admin" . '/includes/image.php');
+			$attachment_data = wp_generate_attachment_metadata( $attachment_id, $upload_file['file'] );
+			wp_update_attachment_metadata( $attachment_id,  $attachment_data );
+		}
+
+		global $wpdb;
+		try {
+			$query = "INSERT `".customer_doc_tb."`(customer_id, post_id) VALUES(".$save_data['customer_id'].", ".$attachment_id.")";
+			$wpdb->query($query);
+		} catch (Exception $e) {
+			echo $e;
+		}		
+	}
+}
 ?>

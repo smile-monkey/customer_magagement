@@ -217,3 +217,8 @@
     margin-right: 5px;
     padding: 2px 18px;
 }
+.doc-action-icons a {
+    color: #555;
+    margin-right: 15px;
+    cursor: pointer;
+}

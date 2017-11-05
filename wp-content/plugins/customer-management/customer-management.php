@@ -28,8 +28,8 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 
 define( 'PLUGINURL', plugin_dir_url( __FILE__ ) );
 
-include_once (__DIR__ . '/includes/functions.php');
 include_once (__DIR__ . '/includes/database.php');
+include_once (__DIR__ . '/includes/functions.php');
 
 if (!class_exists(Customer_Management)){
 	/**
@@ -37,18 +37,13 @@ if (!class_exists(Customer_Management)){
 	*/
 	class Customer_Management
 	{
-		public $_customer_tb;
-		public $_customer_doc_tb;
 
 		function __construct()
 		{
-			global $wpdb;
-			$this->_customer_tb = $wpdb->prefix."woocommerce_customers";
-			$this->_customer_doc_tb = $wpdb->prefix."woocommerce_customers_doc";
 			/**
 			 * Create a table for customer management.
 			 */
-			register_activation_hook( __FILE__, array(&$this, 'register_database'));			
+			register_activation_hook( __FILE__, 'create_customer_table');			
 			/**
 			 * Add sub menu page to menu
 			 */
@@ -63,15 +58,13 @@ if (!class_exists(Customer_Management)){
 			 * Ajax define
 			 */
 			add_action( 'wp_ajax_show_list', array(&$this,'show_list'));
-			add_action( 'wp_ajax_save_customer_data', array(&$this, 'save_customer_data'));
+			add_action( 'wp_ajax_save_customer_data', 'save_customer_new');
 			add_action( 'wp_ajax_save_customer_edit_data', array(&$this,'save_customer_edit_data'));
 			add_action( 'wp_ajax_upload_doc_data', array(&$this,'upload_doc_data'));
-
+			add_action( 'wp_ajax_get_document_body', array(&$this, 'get_document_body'));
+			add_action ('wp_ajax_process_document_action', array(&$this, 'process_document_action'));
 		}
 
-		function register_database() {
-			create_customer_table($this->_customer_tb, $this->_customer_doc_tb);
-		}
 		/**
 		 * Display Customer Management Plugin Menu
 		 */
@@ -158,7 +151,7 @@ if (!class_exists(Customer_Management)){
 		}
 
 		function DisplayCustomer() {
-			$customer_list = get_customer_list($this->_customer_tb);
+			$customer_list = get_customer_list();
 			$content = '
 				<table class="widefat striped customer-table">
 					<thead>
@@ -370,33 +363,33 @@ if (!class_exists(Customer_Management)){
 
 		function show_customer_edit($main_tab, $customer_id) {
 
-			$customer_data = get_customer_data($this->_customer_tb,$customer_id);
+			$customer_data = get_customer_data($customer_id);
 			$user_info = get_user_meta($customer_data->user_id);
 			$content = "";
 			$tab_active = array();
 			switch ($main_tab) {
 				case 'customer_info':
-					$content = get_customer_info($this->_customer_tb, $customer_id);
+					$content = get_customer_info($customer_id);
 					$tab_active[0] = 'nav-tab-active';
 					break;
 				case 'customer_transaction':
-					$content = get_customer_transaction($this->_customer_tb, $customer_id);
+					$content = get_customer_transaction($customer_id);
 					$tab_active[1] = 'nav-tab-active';
 					break;					
 				case 'customer_price':
-					$content = get_customer_price($this->_customer_tb, $customer_id);
+					$content = get_customer_price($customer_id);
 					$tab_active[2] = 'nav-tab-active';
 					break;					
 				case 'customer_delivery':
-					$content = get_customer_delivery($this->_customer_tb, $customer_id);
+					$content = get_customer_delivery($customer_id);
 					$tab_active[3] = 'nav-tab-active';
 					break;					
 				case 'customer_doc':
-					$content = get_customer_doc($this->_customer_tb, $customer_id);
+					$content = get_customer_doc($customer_id);
 					$tab_active[4] = 'nav-tab-active';
 					break;
 				case 'customer_login':
-					$content = get_customer_login($this->_customer_tb, $customer_id);
+					$content = get_customer_login($customer_id);
 					$tab_active[5] = 'nav-tab-active';
 					break;
 			}
@@ -424,11 +417,6 @@ if (!class_exists(Customer_Management)){
 			die();
 		}
 
-		function save_customer_data() {
-			save_customer_new($this->_customer_tb);
-			exit("ok");
-		}
-
 		function save_customer_edit_data() {
 			global $wpdb;
 			$save_data = array();
@@ -436,7 +424,7 @@ if (!class_exists(Customer_Management)){
 			parse_str($_POST['form_data'], $save_data);
 			switch ($save_data['main_tab']) {
 				case 'customer_info':
-					save_customer_info($save_data, $this->_customer_tb);
+					save_customer_info($save_data);
 					break;
 				case 'customer_login':
 					save_customer_login($save_data);
@@ -445,12 +433,24 @@ if (!class_exists(Customer_Management)){
 			exit("ok");
 		}
 
-		function upload_doc_data() {
-			$save_data = array();
+		function get_document_body() {
 			$customer_id = $_POST['customer_id'];
-			parse_str($_POST['form_data'],$save_data);
-			$doc_file = $_FILES['doc_file'];
-			var_dump($customer_id);exit;
+			$search_key = $_POST['search_key'];
+			echo get_doc_body($customer_id, $search_key);
+			exit;
+		}
+
+		function process_document_action() {
+			$selected_id = explode('_', $_POST['selected_id']);
+			switch ($selected_id[0]) {
+				case 'delete':
+					$result = delete_customer_document($selected_id[1]);
+					break;
+				case 'send':
+					$result = send_customer_document($selected_id[1]);
+					break;
+			}
+			exit($result);
 		}
 	}
 }

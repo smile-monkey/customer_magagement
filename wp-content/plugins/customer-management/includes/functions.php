@@ -44,8 +44,8 @@ function get_group_options($selected_group=null) {
 	return $group_options;
 }
 
-function get_customer_info($customer_tb,$customer_id) {
-	$customer_data = get_customer_data($customer_tb,$customer_id);
+function get_customer_info($customer_id) {
+	$customer_data = get_customer_data($customer_id);
 	$user_meta_info = get_user_meta($customer_data->user_id);
 	$user_info = get_userdata($customer_data->user_id);
 
@@ -135,7 +135,7 @@ function get_customer_info($customer_tb,$customer_id) {
 	return $content;
 }
 
-function get_customer_transaction($customer_tb, $customer_id) {
+function get_customer_transaction($customer_id) {
 	$content = '
 		<div>
 			<h1>Transactions</h1>
@@ -148,7 +148,7 @@ function get_customer_transaction($customer_tb, $customer_id) {
 }
 
 
-function get_customer_price($customer_tb, $customer_id) {
+function get_customer_price($customer_id) {
 	$content = '
 		<div>
 			<h1>Price List</h1>
@@ -161,7 +161,7 @@ function get_customer_price($customer_tb, $customer_id) {
 }
 
 
-function get_customer_delivery($customer_tb, $customer_id) {
+function get_customer_delivery($customer_id) {
 	$content = '
 		<div>
 			<h1>Delivery Agreement</h1>
@@ -173,7 +173,7 @@ function get_customer_delivery($customer_tb, $customer_id) {
 	return $content;
 }
 
-function get_customer_doc($customer_tb, $customer_id) {
+function get_customer_doc($customer_id) {
 	$content = '
 		<div style="height:65px;">
 			<div style="float:left;">
@@ -183,15 +183,27 @@ function get_customer_doc($customer_tb, $customer_id) {
 				<input type="text" name="search_box" id="search_box">
 				<input type="button" name="search_btn" id="search_btn" class="document-button" value="Search">
 				<input type="button" name="doc_btn" id="doc_btn" class="document-button" value="Add New Doc">
-				<input type="hidden" name="customer_id" id="customer_id" value="'.$customer_id.'">
-			</div>			
+			</div>
 		</div>
-		<div id="doc_body">'.get_doc_body().'
+		<div>
+			<table class="widefat striped doc-table">
+				<thead>
+					<tr>
+						<td>Upload Date</td>
+						<td>Document Name</td>
+						<td>File</td>
+						<td>Action</td>
+					</tr>
+				</thead>
+				<tbody id="doc_body">'.get_doc_body($customer_id).'
+				</tbody>
+			</table>
 		</div>
 		<div class="popup_background"></div>
 		<div id="popup_form">
 		  <h1>Upload New Documents</h1>
-		  <form id="doc_form">
+		  <form id="doc_form" method="post" enctype="multipart/form-data">
+			<input type="hidden" name="customer_id" id="customer_id" value="'.$customer_id.'">
 		  	<table>
 		  	  <tr>
 	  			<td><span class="td-text">Document Name:</span></td>
@@ -202,7 +214,7 @@ function get_customer_doc($customer_tb, $customer_id) {
 		  		<td>
 		  			<input type="text" id="file_path" name="file_path" disabled>
 			  		<div class="file-wrapper">
-						<input type="file" id="doc_file" name="doc_file" accept=".doc, .docx, .pdf" multiple="" onchange="select_file(this.files);">
+						<input type="file" id="doc_file" name="doc_file" accept=".doc, .docx, .pdf" onchange="select_file(this.files);">
 						<span class="button">Upload</span>
 					</div>
 				</td>
@@ -210,7 +222,7 @@ function get_customer_doc($customer_tb, $customer_id) {
 		  	  <tr style="text-align:center;">
 		  	  	<td colspan="2">
 		  	  		<input type="button" name="doc_cancel_btn" id="doc_cancel_btn" class="document-button" value="Cancel">
-		  	  		<input type="button" name="doc_save_btn" id="doc_save_btn" class="document-button customer-save-btn" value="Save">
+		  	  		<input type="submit" name="doc_save_btn" id="doc_save_btn" class="document-button customer-save-btn" value="Save">
 		  	  	</td>
 		  	  </tr>
 		  	</table>
@@ -220,9 +232,9 @@ function get_customer_doc($customer_tb, $customer_id) {
 	return $content;
 }
 
-function get_customer_login($customer_tb,$customer_id) {
+function get_customer_login($customer_id) {
 
-	$customer_data = get_customer_data($customer_tb,$customer_id);
+	$customer_data = get_customer_data($customer_id);
 	$user_info = get_userdata($customer_data->user_id);
 	$content = '
 	  <form method="post" class="customer-edit-data" action="" enctype="multipart/form-data">
@@ -276,19 +288,5 @@ function get_customer_login($customer_tb,$customer_id) {
 	return $content;
 }
 
-function get_doc_body($search_key=null) {
-	$content = '<table class="widefat striped doc-table">
-		<thead>
-			<tr>
-				<td>Upload Date</td>
-				<td>Document Name</td>
-				<td>File</td>
-				<td>Action</td>
-			</tr>
-		</thead>
-	</table>';
-
-	return $content;
-}
 
 ?>
