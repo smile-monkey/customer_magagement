@@ -11,6 +11,7 @@
 global $wpdb;
 define("customer_tb", $wpdb->prefix."woocommerce_customers");
 define("customer_doc_tb", $wpdb->prefix."woocommerce_customers_doc");
+define("customers_payment", $wpdb->prefix."woocommerce_customers_payment");
 
 function create_customer_table() {
 
@@ -36,6 +37,14 @@ function create_customer_table() {
 				  `id` int(11) NOT NULL AUTO_INCREMENT,
 				  `customer_id` int(11) DEFAULT NULL,
 				  `post_id` int(11) DEFAULT NULL,
+				  PRIMARY KEY (`id`)
+				) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_520_ci";
+		$wpdb->query($query);
+
+		$query = "CREATE TABLE IF NOT EXISTS`".customers_payment."` (
+				  `id` int(11) NOT NULL AUTO_INCREMENT,
+				  `terms_name` varchar(255) COLLATE utf8mb4_unicode_520_ci DEFAULT NULL,
+				  `due_in_days` int(11) DEFAULT NULL,
 				  PRIMARY KEY (`id`)
 				) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_520_ci";
 		$wpdb->query($query);
@@ -115,7 +124,9 @@ function save_customer_new() {
 	global $wpdb;
 	$save_data = array();
 
-	parse_str($_POST['form_data'],$save_data);
+	$form_data = $_POST['form_data'];
+
+	parse_str($form_data,$save_data);
 
 	// create new user
 	$user_id = username_exists( $save_data['user_login'] );
@@ -202,7 +213,7 @@ function delete_customer_document($doc_id) {
 function send_customer_document($doc_id) {
 	global $wpdb;
     try {
-    	$row = $wpdb->get_results( $wpdb->prepare( "SELECT c.`user_id`, d.`post_id` FROM `wp_woocommerce_customers` AS c JOIN `wp_woocommerce_customers_doc` AS d ON c.`id` = d.`customer_id` WHERE d.`id` = %d", $doc_id));
+    	$row = $wpdb->get_results( $wpdb->prepare( "SELECT c.`user_id`, d.`post_id` FROM `".$wpdb->prefix."woocommerce_customers` AS c JOIN ".customer_doc_tb." AS d ON c.`id` = d.`customer_id` WHERE d.`id` = %d", $doc_id));
     	$user_id = $row[0]->user_id;
     	$post_id = $row[0]->post_id;
     	if ($user_id){
@@ -232,6 +243,43 @@ function send_customer_document($doc_id) {
     } catch (Exception $e) {
     	echo $e;
     }	
+}
+
+/*
+ * Get Payment Terms or Terms list
+ */
+function get_payment_row_data($terms_id=null) {
+	global $wpdb;
+	try {
+		$where = "";
+		if ($terms_id){
+			$rows = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM ".customers_payment." WHERE `id` = %d", $terms_id));
+		}else {
+			$rows = $wpdb->get_results( "SELECT * FROM ".customers_payment);
+		}
+		return $rows;
+    } catch (Exception $e) {
+    	echo $e;
+    }
+}
+/*
+ * Save Payment Terms
+ */
+function save_payment_content($save_data) {
+	global $wpdb;
+	
+	if (!$save_data['terms_name']) return false;
+
+	try {
+		if ($save_data['customer_row_id']) { // Update Payment Terms
+			$result = $wpdb->update(customers_payment, array('terms_name'=>$save_data['terms_name'],'due_in_days'=>$save_data['due_in_days'] ), array('id'=>$save_data['customer_row_id']), array('%s','%d'));
+		} else { // Insert Payment Terms
+			$result = $wpdb->insert(customers_payment, array('terms_name'=>$save_data['terms_name'],'due_in_days'=>$save_data['due_in_days'] ), array('%s','%d'));
+		}
+	} catch (Exception $e) {
+		echo $e;
+	}
+	return $result;
 }
 
 
@@ -264,8 +312,7 @@ if(isset($_POST['doc_save_btn'])) {
 
 		global $wpdb;
 		try {
-			$query = "INSERT `".customer_doc_tb."`(customer_id, post_id) VALUES(".$save_data['customer_id'].", ".$attachment_id.")";
-			$wpdb->query($query);
+			$result = $wpdb->insert(customer_doc_tb, array('customer_id'=>$save_data['customer_id'],'post_id'=>$attachment_id ), array('%s','%d'));
 		} catch (Exception $e) {
 			echo $e;
 		}		

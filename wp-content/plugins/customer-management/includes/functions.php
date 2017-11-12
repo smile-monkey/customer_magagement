@@ -5,6 +5,245 @@
  * @author Smile
  */
 
+function DisplayCustomer() {
+	$customer_list = get_customer_list();
+	$content = '
+		<table class="widefat striped customer-table">
+			<thead>
+				<tr>
+					<td>Customer ID</td>
+					<td>Name (Last, First)</td>
+					<td>Company</td>
+					<td>Total Orders</td>
+					<td>Amount Due</td>
+					<td>Action</td>
+				</tr>
+			</thead>
+			<tbody>';
+		if (sizeof($customer_list)>0) {
+			foreach ($customer_list as $customer) {
+				$user_info = get_user_meta($customer->user_id);
+				if (!$user_info) continue;
+				$content .='
+					<tr>
+						<td>'.$customer->user_id.'</td>
+						<td>'.$user_info['first_name'][0].' '.$user_info['last_name'][0].'</td>
+						<td>'.$customer->company.'</td>
+						<td>0</td>
+						<td>$0.00</td>
+						<td class="user_actions column-user_actions">
+						  <p>
+							<a class="button tips edit" href="'.admin_url( 'admin.php?page=customer_management&main_tab=customer_info&customer_id='.$customer->id ).'">Edit</a>
+							<a class="button tips dashicons dashicons-migrate" title="Payment is overdue"></a>
+						  </p>
+						</td>
+					</tr>
+				';
+			}
+		}
+
+	$content .='
+			</tbody>
+		</table>
+	';
+	return $content;
+}
+
+function DisplayPayment() {
+	$payment_data = get_payment_row_data();
+	$content = '
+		<table class="widefat striped payment-list">
+			<thead>
+				<tr>
+					<td style="width: 30%;">Payment Terms ID</td>
+					<td>Terms Name</td>
+					<td>Due in Days</td>
+					<td>Action</td>
+				</tr>
+			</thead>
+			<tbody>';
+	if (sizeof($payment_data)>0) {
+		foreach ($payment_data as $row) {
+			$content .= '<tr>
+				<td>'.$row->id.'</td>
+				<td>'.$row->terms_name.'</td>
+				<td>'.$row->due_in_days.'</td>
+				<td class="user_actions column-user_actions">
+				  <p><a class="button tips edit customer-content-edit" data-row-id="'.$row->id.'" data-type="payment"></a></p>
+				</td>
+			</tr>';
+		}
+	}
+	$content .='</tbody>
+		</table>';
+	return $content;
+}
+
+function DisplayGroup() {
+	$content = '
+		<table class="widefat striped group-table">
+			<thead>
+				<tr>
+					<td>Group ID</td>
+					<td>Name (Last, First)</td>
+					<td>Company</td>
+					<td>Total Orders</td>
+					<td>Amount Due</td>
+					<td>Action</td>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td>123456</td>
+					<td>Kinjal Patel Director</td>
+					<td>Hi-TECH LIMITED</td>
+					<td>0</td>
+					<td>$0.00</td>
+					<td class="user_actions column-user_actions">
+					  <p>
+						<a class="button tips edit" href="#">Edit</a>
+					  </p>
+					</td>
+				</tr>
+				<tr>
+					<td>56789</td>
+					<td>Frank Firely Director</td>
+					<td>COCA COLA LIMITED</td>
+					<td>0</td>
+					<td>$0.00</td>
+					<td class="user_actions column-user_actions">
+					  <p>
+						<a class="button tips edit" href="#">Edit</a>
+					  </p>
+					</td>
+				</tr>
+			</tbody>
+		</table>
+	';
+	return $content;
+}
+
+/*
+ *
+ */
+function add_customer() {
+	$group_options = get_group_options();
+    $country_options = get_country_options("US");
+?>
+  <div class="add-header">
+  	<img src="<?php echo plugins_url( '../assets/images/customer-icon.png' , __FILE__ );?>">
+  	<h1>Add New Customer</h1>
+  </div>
+  <div class="add-content">
+  	<form id="add_form" method="post" action="" enctype="multipart/form-data" autocomplete="on">
+  		<table class="add_form_table">
+  		  <tr>
+				<td colspan="2">
+  				<span class="td-text">Customer Type*</span>
+  				<label for="Retailer" style="padding-right: 20px; padding-left: 4px;"><input type="radio" name="customer_type" value="Retailer" checked>Retail Customer</label>
+  				<label for="Business"><input type="radio" name="customer_type" value="Business">Business Customer</label>
+				</td>
+  		  </tr>
+  		  <tr>
+  		  	<td colspan="2">
+  		  		<span class="td-text">Customer Group</span>
+				<select id="group_id" name="group_id"><?php echo $group_options;?></select> 		
+  		  	</td>
+  		  </tr>
+  		  <tr>
+  		  	<td colspan="2">
+  		  		<span class="td-text" style="float: left;">Account Status</span>
+  		  		<span style="float: left;margin-top: -5px;">
+	  		  		<input type="checkbox" class="multi-switch" initial-value="0" unchecked-value="2" checked-value="1" value="0" name="account_status" id="account_status" />
+  		  		</span>
+  		  		<input type="hidden" name="user_status" id="user_status" value="0">
+  		  	</td>
+  		  </tr>
+  		  <tr>
+  		  	<td>
+  		  		<span class="td-text">First Name</span><br>
+  		  		<input name="first_name" type="text" id="first_name" value="">
+  		  	</td>
+  		  	<td>
+  		  		<span class="td-text">Last Name</span><br>
+  		  		<input name="last_name" type="text" id="last_name" value="">
+  		  	</td>		  		  	
+  		  </tr>
+  		  <tr>
+  		  	<td>
+  		  		<span class="td-text">Username</span><br>
+  		  		<input name="user_login" type="text" id="user_login" value="">
+  		  	</td>
+  		  	<td>
+  		  		<span class="td-text">Password</span><br>
+  		  		<input name="user_pass" type="password" id="user_pass" value="">
+  		  	</td>		  		  	
+  		  </tr>		  		  
+  		  <tr>
+  		  	<td>
+  		  		<span class="td-text">Company Name</span><br>
+  		  		<input name="company" type="text" id="company" value="">
+  		  	</td>
+  		  	<td>
+  		  		<span class="td-text">Tax Number</span><br>
+  		  		<input name="tax_number" type="text" id="tax_number" value="">
+  		  	</td>		  		  	
+  		  </tr>
+  		  <tr>
+  		  	<td>
+  		  		<span class="td-text">Phone</span><br>
+  		  		<input name="phone" type="text" id="phone" value="">
+  		  	</td>
+  		  	<td>
+  		  		<span class="td-text">Mobile</span><br>
+  		  		<input name="mobile" type="text" id="mobile" value="">
+  		  	</td>
+  		  </tr>
+  		  <tr>
+  		  	<td colspan="2">
+  		  		<span class="td-text">Email Address</span><br>
+  		  		<input name="user_email" type="email" id="user_email" value="" style="width: calc(100% - 70px);" autocomplete="off">
+  		  	</td>
+  		  </tr>
+  		  <tr>
+  		  	<td colspan="2">
+  		  		<input name="shipping_chk_box" type="checkbox" id="shipping_chk_box" value="">
+  		  		<span class="td-text">Is Shipping address as same as Billing Address</span>
+  		  		<input type="hidden" name="shipping_check" id="shipping_check" value="0">
+  		  	</td>
+  		  </tr>
+  		  <tr>
+  		  	<td>
+  		  		<span class="td-text" id="billing_title">Billing Address</span><br>
+  		  		<input type="text" name="billing_address_1" id="billing_address_1" placeholder="Street Name"><br>
+  		  		<input type="text" name="billing_city" id="billing_city" placeholder="Suburb"><br>
+  		  		<input type="text" name="billing_state" id="billing_state" placeholder="State / Province"><br>
+  		  		<input type="text" name="billing_postcode" id="billing_postcode" placeholder="Postal Code / Zip Code"><br>
+  		  		<select name="billing_country" id="billing_country" class="country-select"><?php echo $country_options;?></select>		  		  		
+  		  	</td>
+  		  	<td id="shipping_data">
+  		  		<span class="td-text">Shipping Address</span><br>
+  		  		<input type="text" name="shipping_address_1" id="shipping_address_1" placeholder="Street Name"><br>
+  		  		<input type="text" name="shipping_city" id="shipping_city" placeholder="Suburb"><br>
+  		  		<input type="text" name="shipping_state" id="shipping_state" placeholder="State / Province"><br>
+  		  		<input type="text" name="shipping_postcode" id="shipping_postcode" placeholder="Postal Code / Zip Code"><br>
+  		  		<select name="shipping_country" id="shipping_country" class="country-select"><?php echo $country_options;?></select>
+  		  	</td>
+  		  </tr>
+  		  <tr>
+  		  	<td>
+  		  		<input type="button" name="cancel_btn" id="cancel_btn" class="customer-button" value="Cancel"/>
+  		  	</td>
+  		  	<td>
+  		  		<input type="submit" name="save_new_btn" id="save_new_btn" class="customer-button" value="Save"/>
+  		  	</td>
+  		  </tr>		  		  
+  		</table>
+  	</form>
+  </div>
+<?php
+}
+
 function get_country_options($selected_country=null) {
 
 	global $woocommerce;
@@ -288,5 +527,48 @@ function get_customer_login($customer_id) {
 	return $content;
 }
 
+function get_payment_content($terms_id=null) {
+	$payment_data = array();
+	if ($terms_id)
+		$payment_data = get_payment_row_data($terms_id);
+	$content .= '
+		<div style="height:65px;">
+			<div style="float:left;">
+				<h1>Payment Terms</h1>
+			</div>
+		</div>
+		<div>
+		  <form method="post" id="customer_content_data" action="" enctype="multipart/form-data">
+			<table class="payment-table">
+			  <tr>
+			  	<td>
+			  		<span class="td-text">Terms Name</span>
+			  	</td>
+			  	<td>
+			  		<span class="td-text">Due in Days</span>
+			  	</td>			  	
+			  </tr>
+			  <tr>
+			  	<td>
+			  	  <input type="text" name="terms_name" id="terms_name" value="'.$payment_data[0]->terms_name.'">
+			  	</td>
+			  	<td>
+			  	  <input type="number" name="due_in_days" id="due_in_days" min="0" style="width: 60px;" value="'.$payment_data[0]->due_in_days.'">
+			  	  <span style="color: #b7b7b7;">Days in due of Invoice Date</span>
+			  	</td>
+			  </tr>
+			  <tr>
+			  	<td colspan="2">
+		  	  		<input type="hidden" name="customer_row_id" id="customer_row_id" value="'.$terms_id.'">
+		  	  		<input type="button" name="customer_cancel_btn" id="customer_cancel_btn" class="document-button" value="Cancel">
+		  	  		<input type="submit" name="customer_save_btn" id="customer_save_btn" class="document-button customer-save-btn" value="Save">
+		  	  	</td>
+	  	  	  </tr>
+			</table>
+		  </form>
+		</div>
+	';
 
+	return $content;
+}
 ?>

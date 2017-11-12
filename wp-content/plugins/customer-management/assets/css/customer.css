@@ -41,7 +41,11 @@
 .customer-table thead > tr > td {
     vertical-align: middle;
 }
-
+.column-user_actions p .dashicons-migrate {
+    width: 2em;
+    height: 2em !important;
+    padding-top: 0px !important;
+}
 /* Add Customer, Group or View Customer */
 .customer-add, .group-add, .customer-edit {
     margin: 20px;
@@ -127,4 +131,98 @@
 }
 .account-status-box .multi-switch {
     padding-left: 0px;
+}
+/* Documents Page */
+.document-button {
+    width: 130px;
+    height: 32px;
+    background: #474747;
+    color: #fff;
+    font-size: 16px;
+    border-radius: 5px;
+    cursor: pointer;    
+}
+#search_box {
+    width: 250px;
+    height: 28px;
+}
+#doc_btn, .customer-save-btn {
+    margin-left: 15px;
+    background: #12af0a;
+}
+.doc-table tr>td:first-child {
+    width: 20%;
+}
+.doc-table tr>td:nth-child(2) {
+    width: 35%;
+}
+.doc-table tr>td:nth-child(3) {
+    width: 25%;
+}
+#popup_form {
+    display: none;
+    position: fixed;
+    top: 250px;
+    z-index: 9999;
+    opacity: 1;
+    width: 40%;
+    left: 30%;
+    border: 2px solid;
+    border-radius: 5px;
+    border-color: #5e5e5e;
+    padding: 30px;
+    box-shadow: 0 0 0px 0px #5e5e5e;
+    max-width: 650px;
+    background-color: rgba( 255, 255, 255, 0.9 );  
+}
+.popup_background {
+    background-color: rgb(0, 0, 0);
+    position: fixed;
+    top: 0px;
+    right: 0px;
+    bottom: 0px;
+    left: 0px;
+    opacity: 0.2;
+    z-index: 9998;
+    display: none;
+}
+#doc_name, #file_path {
+    width: 250px;
+}
+#doc_form {
+    padding-top: 20px;
+}
+#doc_form table tr td {
+    padding-bottom: 20px;
+}
+.file-wrapper {
+    cursor: pointer;
+    display: inline-block;
+    overflow: hidden;
+    position: relative;
+    margin-bottom: -8px;
+}
+.file-wrapper input {
+    cursor: pointer;
+    font-size: 100px;
+    filter: alpha(opacity=1);
+    -moz-opacity: 0.01;
+    opacity: 0.01;
+    position: absolute;
+    right: 0;
+    top: 0;
+}
+.file-wrapper .button {
+    -moz-border-radius: 5px;
+    -webkit-border-radius: 5px;
+    border-radius: 5px;
+    cursor: pointer;
+    display: inline-block;
+    margin-right: 5px;
+    padding: 2px 18px;
+}
+.doc-action-icons a {
+    color: #555;
+    margin-right: 15px;
+    cursor: pointer;
 }

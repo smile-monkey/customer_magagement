@@ -2,6 +2,7 @@ jQuery(function ($) {
 
 	$(document).ready(function(){
 		$("#customer_list").trigger('click');
+		document_action();
 	});
 
 	$(".customer-list li").on("click",function(e){
@@ -113,4 +114,76 @@ jQuery(function ($) {
 		});		
 	});
 
+	$("#doc_btn").on("click", function(e){
+		$(".popup_background").show();
+		$("#popup_form").show();
+		$("#file_path").val(null);
+
+	});
+	$("#doc_cancel_btn").on("click", function(e){
+		$(".popup_background").hide();
+		$("#popup_form").hide();		
+	});
+	$("#doc_save_btn").on("click", function(e){
+		if($("#file_path").val() == '' || $("#file_path").val() == null){
+			e.preventDefault();
+			return false;
+		}
+	});
+	$("#search_btn").on("click", function(e){
+		var customer_id = $("#customer_id").val();
+		var search_key = $("#search_box").val();
+		var data = {
+			action: "get_document_body",
+			customer_id: customer_id,
+			search_key: search_key
+		};
+		$.ajax({
+			type: "POST",
+			url: ajaxurl,
+			data: data,
+			success: function(response){
+				$("#doc_body").html(response);
+				document_action();
+			},
+			error: function(XMLHttpRequest, textStatus, errorThrown) {
+
+			}
+		});			
+	});
+
+	$("#search_box").keyup(function(event) {
+	    if (event.keyCode === 13) {
+	        $("#search_btn").trigger('click');
+	    }
+	});
+
+	document_action = function() {
+		$(".doc-action-icons").on("click", function(e){
+			var data = {
+				action: "process_document_action",
+				selected_id: e.target.id
+			};
+			var message = e.target.title == "Delete" ? "" : "Successfully send!";
+			$.ajax({
+				type: "POST",
+				url: ajaxurl,
+				data: data,
+				success: function(response){
+					if (message)
+						alert(message);
+					window.location.reload();
+				},
+				error: function(XMLHttpRequest, textStatus, errorThrown) {
+
+				}
+			});	
+		});
+	}
 });
+
+function select_file(files) {
+	if(jQuery(files[0]).attr("name")){
+		jQuery("#file_path").val(files[0].name);
+	}
+}

@@ -41,7 +41,11 @@
 .customer-table thead > tr > td {
     vertical-align: middle;
 }
-
+.column-user_actions p .dashicons-migrate {
+    width: 2em;
+    height: 2em !important;
+    padding-top: 0px !important;
+}
 /* Add Customer, Group or View Customer */
 .customer-add, .group-add, .customer-edit {
     margin: 20px;
@@ -221,4 +225,20 @@
     color: #555;
     margin-right: 15px;
     cursor: pointer;
+}
+/* Payment Terms Page */
+#terms_name {
+    width: 200px;
+}
+#group_cancel_btn {
+    margin-top: 50px;
+}
+.payment-table {
+    margin-top: 20px;
+}
+.payment-table tr {
+    height: 40px;
+}
+.payment-table tr td:first-child {
+    padding-right: 50px;
 }

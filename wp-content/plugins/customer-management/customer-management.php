@@ -58,11 +58,13 @@ if (!class_exists(Customer_Management)){
 			 * Ajax define
 			 */
 			add_action( 'wp_ajax_show_list', array(&$this,'show_list'));
+			add_action( 'wp_ajax_get_customer_content', array(&$this, 'get_customer_content'));
 			add_action( 'wp_ajax_save_customer_data', 'save_customer_new');
 			add_action( 'wp_ajax_save_customer_edit_data', array(&$this,'save_customer_edit_data'));
 			add_action( 'wp_ajax_upload_doc_data', array(&$this,'upload_doc_data'));
 			add_action( 'wp_ajax_get_document_body', array(&$this, 'get_document_body'));
 			add_action ('wp_ajax_process_document_action', array(&$this, 'process_document_action'));
+			add_action ('wp_ajax_save_customer_content_data', array(&$this, 'save_customer_content_data'));
 		}
 
 		/**
@@ -75,7 +77,7 @@ if (!class_exists(Customer_Management)){
 		        'manage_options',
 		        'customer_management',
 		        array( &$this, 'Customer_management_Main' ),
-		        PLUGINURL.'assets/images/menu-icon.png',
+		        'dashicons-index-card',
 		        56
 		    );
 		}
@@ -99,13 +101,15 @@ if (!class_exists(Customer_Management)){
 				$this->show_customer_edit ($main_tab, $customer_id);
 			}else {
 		?>
-			  <div class="customer-body">
+			  <div class="customer-content customer-body">
 				<div class="customer-main">
 					<h1 class="main-title"><?php _e( 'Customer Management', 'customer_management_title' ); ?></h1>
 					<select id="customer_select" name="customer_select">
 						<option value="0" selected=true >--Add New--</option>
-						<option value="Customer">Customer</option>
-						<option value="Group">Group</option>
+						<option value="customer">Customer</option>
+						<option value="group">Group</option>
+						<option value="price">Price List</option>
+						<option value="payment">Payment Terms</option>
 					</select>
 				</div>
 				<div class="customer-list">
@@ -116,15 +120,11 @@ if (!class_exists(Customer_Management)){
 						<li id="payment_list" name="payment_list">Payment Terms</li>
 					</ul>
 				</div>
-				<div id="main_content" name="main_content">				
+				<div id="main_content" name="main_content">
 				</div>
 			  </div>
-			  <div class="customer-add">
-			  	<?php $this->add_customer();?>
-			  </div>
-			  <div class="group-add">
-			  	<?php $this->add_group();?>
-			  </div>
+			  <div class="customer-content customer-add"><?php echo add_customer();?></div>
+			  <div class="customer-content group-add"></div>
 		<?php
 			}
 		}
@@ -134,231 +134,31 @@ if (!class_exists(Customer_Management)){
 			$list_id = $_POST['list_id'];
 			switch ($list_id) {
 				case 'group_list':
-					$content = $this->DisplayGroup();
+					$content = DisplayGroup();
 					break;
 				case 'price_list':
-					$content = $this->DisplayGroup();
+					$content = DisplayGroup();
 					break;
 				case 'payment_list':
-					$content = $this->DisplayGroup();
+					$content = DisplayPayment();
 					break;					
 				default:
-					$content = $this->DisplayCustomer();
+					$content = DisplayCustomer();
 					break;
 			}
 			echo $content;
 			die();
 		}
 
-		function DisplayCustomer() {
-			$customer_list = get_customer_list();
-			$content = '
-				<table class="widefat striped customer-table">
-					<thead>
-						<tr>
-							<td>Customer ID</td>
-							<td>Name (Last, First)</td>
-							<td>Company</td>
-							<td>Total Orders</td>
-							<td>Amount Due</td>
-							<td>Action</td>
-						</tr>
-					</thead>
-					<tbody>';
-				if (sizeof($customer_list)>0) {
-					foreach ($customer_list as $customer) {
-						$user_info = get_user_meta($customer->user_id);
-						$content .='
-							<tr>
-								<td>'.$customer->user_id.'</td>
-								<td>'.$user_info['first_name'][0].' '.$user_info['last_name'][0].'</td>
-								<td>'.$customer->company.'</td>
-								<td>0</td>
-								<td>$0.00</td>
-								<td class="user_actions column-user_actions">
-								  <p>
-									<a class="button tips edit" href="'.admin_url( 'admin.php?page=customer_management&main_tab=customer_info&customer_id='.$customer->id ).'">Edit</a>
-								  </p>
-								</td>
-							</tr>
-						';
-					}
-				}
-
-			$content .='
-					</tbody>
-				</table>
-			';
-			return $content;
-		}
-
-		function DisplayGroup() {
-			$content = '
-				<table class="widefat striped group-table">
-					<thead>
-						<tr>
-							<td>Group ID</td>
-							<td>Name (Last, First)</td>
-							<td>Company</td>
-							<td>Total Orders</td>
-							<td>Amount Due</td>
-							<td>Action</td>
-						</tr>
-					</thead>
-					<tbody>
-						<tr>
-							<td>123456</td>
-							<td>Kinjal Patel Director</td>
-							<td>Hi-TECH LIMITED</td>
-							<td>0</td>
-							<td>$0.00</td>
-							<td class="user_actions column-user_actions">
-							  <p>
-								<a class="button tips edit" href="#">Edit</a>
-							  </p>
-							</td>
-						</tr>
-						<tr>
-							<td>56789</td>
-							<td>Frank Firely Director</td>
-							<td>COCA COLA LIMITED</td>
-							<td>0</td>
-							<td>$0.00</td>
-							<td class="user_actions column-user_actions">
-							  <p>
-								<a class="button tips edit" href="#">Edit</a>
-							  </p>
-							</td>
-						</tr>
-					</tbody>
-				</table>
-			';
-			return $content;
-		}
-
-		/*
-		 *
-		 */
-		function add_customer() {
-			$group_options = get_group_options();
-		    $country_options = get_country_options("US");
-	?>
-		  <div class="add-header">
-		  	<img src="<?php echo plugins_url( '/assets/images/customer-icon.png' , __FILE__ );?>">
-		  	<h1>Add New Customer</h1>
-		  </div>
-		  <div class="add-content">
-		  	<form id="add_form" method="post" action="" enctype="multipart/form-data" autocomplete="on">
-		  		<table class="add_form_table">
-		  		  <tr>
-	  				<td colspan="2">
-		  				<span class="td-text">Customer Type*</span>
-		  				<label for="Retailer" style="padding-right: 20px; padding-left: 4px;"><input type="radio" name="customer_type" value="Retailer" checked>Retail Customer</label>
-		  				<label for="Business"><input type="radio" name="customer_type" value="Business">Business Customer</label>
-	  				</td>
-		  		  </tr>
-		  		  <tr>
-		  		  	<td colspan="2">
-		  		  		<span class="td-text">Customer Group</span>
-						<select id="group_id" name="group_id"><?php echo $group_options;?></select> 		
-		  		  	</td>
-		  		  </tr>
-		  		  <tr>
-		  		  	<td colspan="2">
-		  		  		<span class="td-text" style="float: left;">Account Status</span>
-		  		  		<span style="float: left;margin-top: -5px;">
-			  		  		<input type="checkbox" class="multi-switch" initial-value="0" unchecked-value="2" checked-value="1" value="0" name="account_status" id="account_status" />
-		  		  		</span>
-		  		  		<input type="hidden" name="user_status" id="user_status" value="0">
-		  		  	</td>
-		  		  </tr>
-		  		  <tr>
-		  		  	<td>
-		  		  		<span class="td-text">First Name</span><br>
-		  		  		<input name="first_name" type="text" id="first_name" value="">
-		  		  	</td>
-		  		  	<td>
-		  		  		<span class="td-text">Last Name</span><br>
-		  		  		<input name="last_name" type="text" id="last_name" value="">
-		  		  	</td>		  		  	
-		  		  </tr>
-		  		  <tr>
-		  		  	<td>
-		  		  		<span class="td-text">Username</span><br>
-		  		  		<input name="user_login" type="text" id="user_login" value="">
-		  		  	</td>
-		  		  	<td>
-		  		  		<span class="td-text">Password</span><br>
-		  		  		<input name="user_pass" type="password" id="user_pass" value="">
-		  		  	</td>		  		  	
-		  		  </tr>		  		  
-		  		  <tr>
-		  		  	<td>
-		  		  		<span class="td-text">Company Name</span><br>
-		  		  		<input name="company" type="text" id="company" value="">
-		  		  	</td>
-		  		  	<td>
-		  		  		<span class="td-text">Tax Number</span><br>
-		  		  		<input name="tax_number" type="text" id="tax_number" value="">
-		  		  	</td>		  		  	
-		  		  </tr>
-		  		  <tr>
-		  		  	<td>
-		  		  		<span class="td-text">Phone</span><br>
-		  		  		<input name="phone" type="text" id="phone" value="">
-		  		  	</td>
-		  		  	<td>
-		  		  		<span class="td-text">Mobile</span><br>
-		  		  		<input name="mobile" type="text" id="mobile" value="">
-		  		  	</td>
-		  		  </tr>
-		  		  <tr>
-		  		  	<td colspan="2">
-		  		  		<span class="td-text">Email Address</span><br>
-		  		  		<input name="user_email" type="email" id="user_email" value="" style="width: calc(100% - 70px);" autocomplete="off">
-		  		  	</td>
-		  		  </tr>
-		  		  <tr>
-		  		  	<td colspan="2">
-		  		  		<input name="shipping_chk_box" type="checkbox" id="shipping_chk_box" value="">
-		  		  		<span class="td-text">Is Shipping address as same as Billing Address</span>
-		  		  		<input type="hidden" name="shipping_check" id="shipping_check" value="0">
-		  		  	</td>
-		  		  </tr>
-		  		  <tr>
-		  		  	<td>
-		  		  		<span class="td-text" id="billing_title">Billing Address</span><br>
-		  		  		<input type="text" name="billing_address_1" id="billing_address_1" placeholder="Street Name"><br>
-		  		  		<input type="text" name="billing_city" id="billing_city" placeholder="Suburb"><br>
-		  		  		<input type="text" name="billing_state" id="billing_state" placeholder="State / Province"><br>
-		  		  		<input type="text" name="billing_postcode" id="billing_postcode" placeholder="Postal Code / Zip Code"><br>
-		  		  		<select name="billing_country" id="billing_country" class="country-select"><?php echo $country_options;?></select>		  		  		
-		  		  	</td>
-		  		  	<td id="shipping_data">
-		  		  		<span class="td-text">Shipping Address</span><br>
-		  		  		<input type="text" name="shipping_address_1" id="shipping_address_1" placeholder="Street Name"><br>
-		  		  		<input type="text" name="shipping_city" id="shipping_city" placeholder="Suburb"><br>
-		  		  		<input type="text" name="shipping_state" id="shipping_state" placeholder="State / Province"><br>
-		  		  		<input type="text" name="shipping_postcode" id="shipping_postcode" placeholder="Postal Code / Zip Code"><br>
-		  		  		<select name="shipping_country" id="shipping_country" class="country-select"><?php echo $country_options;?></select>
-		  		  	</td>
-		  		  </tr>
-		  		  <tr>
-		  		  	<td>
-		  		  		<input type="button" name="cancel_btn" id="cancel_btn" class="customer-button" value="Cancel"/>
-		  		  	</td>
-		  		  	<td>
-		  		  		<input type="submit" name="save_new_btn" id="save_new_btn" class="customer-button" value="Save"/>
-		  		  	</td>
-		  		  </tr>		  		  
-		  		</table>
-		  	</form>
-		  </div>
-	<?php
-		}
-
-		function add_group() {
-			$this->add_customer();
+		function get_customer_content() {
+			$add_type = $_POST['add_type'];
+			$row_id = $_POST['row_id'];
+			switch ($add_type) {
+				case 'payment':
+					echo get_payment_content($row_id);
+					break;
+			}
+			die();
 		}
 
 		function show_customer_edit($main_tab, $customer_id) {
@@ -448,6 +248,19 @@ if (!class_exists(Customer_Management)){
 					break;
 				case 'send':
 					$result = send_customer_document($selected_id[1]);
+					break;
+			}
+			exit($result);
+		}
+
+		// Save Payment Terms
+		function save_customer_content_data() {
+			$save_data = array();
+			$customer_content_type = $_POST['customer_content_type'];
+			parse_str($_POST['form_data'],$save_data);
+			switch ($customer_content_type) {
+				case 'payment':
+					$result = save_payment_content($save_data);
 					break;
 			}
 			exit($result);
