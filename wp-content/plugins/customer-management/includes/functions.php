@@ -314,6 +314,124 @@ function get_group_options($selected_group=null) {
 	return $group_options;
 }
 
+/*
+ * Get customer group options
+ */
+function get_customer_group_options($selected_group=null) {
+
+	$group_data = array();
+	// $group_data = get_group_row_data();
+
+	if (sizeof($group_data) > 0) {
+		$group_options = $selected = '';
+		foreach ($group_data as $group) {
+			$selected = $group->id ==$selected_group ? 'selected="selected"' : '';
+			$group_options .= "<option value='".$group->id."' ".$selected.">".$group->group_name."</option>";
+		}
+	}else {
+		$group_options = '<option value="" selected="selected">Select a group…</option>';
+	}
+
+	return $group_options;
+}
+
+/*
+ * Get customer group options
+ */
+function get_price_options($selected_price=null) {
+
+	$price_data = array();
+	$price_data = get_price_row_data();
+
+	if (sizeof($price_data) > 0) {
+		$price_options = $selected = '';
+		foreach ($price_data as $price) {
+			$selected = $price->id ==$selected_price ? 'selected="selected"' : '';
+			$price_options .= "<option value='".$price->id."' ".$selected.">".$price->price_name."</option>";
+		}
+	}else {
+		$price_options = '<option value="" selected="selected">Select a price…</option>';
+	}
+
+	return $price_options;
+}
+
+/*
+ * Get payment method options
+ */
+function get_payment_method_options($selected_method=null) {
+
+	$method_data = array();
+	// $method_data = get_payment_method_data();
+
+	if (sizeof($method_data) > 0) {
+		$method_options = $selected = '';
+		foreach ($method_data as $method) {
+			$selected = $method->id ==$selected_method ? 'selected="selected"' : '';
+			$method_options .= "<option value='".$method->id."' ".$selected.">".$method->method_name."</option>";
+		}
+	}else {
+		$method_options = '<option value="" selected="selected">Select a payment method…</option>';
+	}
+
+	return $method_options;
+}
+/*
+ * Get payment terms options
+ */
+function get_payment_terms_options($selected_terms=null) {
+
+	$terms_data = array();
+	$terms_data = get_payment_row_data();
+
+	if (sizeof($terms_data) > 0) {
+		$terms_options = $selected = '';
+		foreach ($terms_data as $terms) {
+			$selected = $terms->id ==$selected_terms ? 'selected="selected"' : '';
+			$terms_options .= "<option value='".$terms->id."' ".$selected.">".$terms->terms_name."</option>";
+		}
+	}else {
+		$terms_options = '<option value="" selected="selected">Select a payment terms…</option>';
+	}
+
+	return $terms_options;
+}
+
+/*
+ * Get Delivery Method options
+ */
+function get_delivery_options($selected_delivery=null) {
+
+	$delivery_data = array();
+	// $delivery_data = get_delivery_data();
+
+	if (sizeof($delivery_data) > 0) {
+		$delivery_options = $selected = '';
+		foreach ($delivery_data as $delivery) {
+			$selected = $delivery->id ==$selected_delivery ? 'selected="selected"' : '';
+			$delivery_options .= "<option value='".$delivery->id."' ".$selected.">".$delivery->delivery_name."</option>";
+		}
+	}else {
+		$delivery_options = '<option value="" selected="selected">Select a delivery method…</option>';
+	}
+
+	return $delivery_options;
+}
+/*
+ * Get Week options
+ */
+function get_week_options($selected_week=1) {
+
+	$week_data = array('1'=>'Monday','2'=>'Tuesday','3'=>'Wednesday','4'=>'Thursday','5'=>'Friday','6'=>'Saturday','7'=>'Sunday');
+	$week_options = $selected = '';
+	foreach ($week_data as $key=>$week_name) {
+		$selected = $key ==$selected_week ? 'selected="selected"' : '';
+		$week_options .= "<option value='".$key."' ".$selected.">".$week_name."</option>";
+	}
+
+	return $week_options;
+}
+
 function get_customer_info($customer_id) {
 	$customer_data = get_customer_data($customer_id);
 	$user_meta_info = get_user_meta($customer_data->user_id);
@@ -608,7 +726,7 @@ function get_payment_content($terms_id=null) {
  */
 function get_price_content($price_id=null) {
 	$price_data = array();
-	$page_title = "Add New Price List";
+	$page_title = "Add New Price";
 	if ($price_id){
 		$page_title = "Price List";
 		$price_data = get_price_row_data($price_id);
@@ -738,4 +856,152 @@ function get_price_content($price_id=null) {
 	';
 	return $content;
 }
+
+/*
+ * Display Add New Group
+ */
+function get_group_content($row_id=null) {
+	$group_data = array();
+	$page_title = "Add New Group";
+	if ($row_id){
+		$page_title = "Update Group";
+		$group_data = get_group_row_data($row_id);
+	}
+
+	$week_body = '';
+	for ($i=1; $i<=7 ; $i++) {
+		$week_body .= '<tr>
+			<td style="width:25px;"><input type="checkbox" name="week_status_'.$i.'" id="week_status_'.$i.'"></td>
+			<td><select disabled style="width:110px">'.get_week_options($i).'</select></td>
+			<td><input type="text" name="week_days_'.$i.'" id="week_days_'.$i.'" style="width:45px;"></td>
+			<td><select name="week_select_'.$i.'" id="week_select_'.$i.'" style="width:50px;">
+					<option value="AM">AM</option>
+					<option value="PM">PM</option>
+				</select>
+			</td>
+			<td><select name="delivery_select_'.$i.'" id="delivery_select_'.$i.'" style="width:110px">'.get_week_options().'</select></td>
+		</tr>';
+	}
+	$content .= '
+		<div style="height:65px;">
+			<div style="float:left;">
+				<h1>'.$page_title.'</h1>
+			</div>
+		</div>
+		<div>
+		  <form method="post" id="customer_content_data" action="" enctype="multipart/form-data">
+		    <div style="float:left;">
+				<table class="group-table">
+				  <tr>
+				  	<td style="padding-bottom: 50px;">
+				  		<span class="td-text">Group Name</span>
+				  	</td>
+				  	<td style="padding-bottom: 50px;">
+				  		<input type="text" name="group_name" id="group_name" value="'.$group_data->group_name.'">
+				  	</td>			  	
+				  </tr>
+				  <tr>
+				  	<td colspan="2">
+				  		<span class="td-text">Default Setting for Group</span>
+				  	</td>			  	
+				  </tr>
+				  <tr>
+				  	<td>
+				  		<span class="td-text">Price List</span>
+				  	</td>
+				  	<td>
+				  		<select name="price_select" id="price_select">'.get_price_options().'</select>
+				  	</td>			  	
+				  </tr>
+				  <tr>
+				  	<td>
+				  		<span class="td-text">Payment Method</span>
+				  	</td>
+				  	<td>
+				  		<select name="method_select" id="method_select">'.get_payment_method_options().'</select>
+				  	</td>			  	
+				  </tr>
+				  <tr>
+				  	<td>
+				  		<span class="td-text">Payment Terms</span>
+				  	</td>
+				  	<td>
+				  		<select name="terms_select" id="terms_select">'.get_payment_terms_options().'</select>
+				  	</td>			  	
+				  </tr>
+				</table>
+			</div>
+		    <div>
+				<table class="group-table" style="padding-left: 100px;">
+				  <tr>
+				  	<td>
+				  		<span class="td-text">Delivery Method</span>
+				  	</td>
+				  	<td>
+				  		<select name="delivery_select" id="delivery_select">'.get_delivery_options().'</select>
+				  	</td>			  	
+				  </tr>
+				  <tr>
+				  	<td style="position: relative;">
+				  		<span class="td-text" style="position: absolute;top: 0px;">Delivery Days</span>
+				  	</td>
+				  	<td>
+				  		<input type="number" name="delivery_days" id="delivery_days" min="0" max="7" style="width: 60px;" value="'.$group_data->delivery_days.'">
+				  		<span style="color: #b7b7b7;">Days in Week</span><br>
+				  		<span style="color: #b7b7b7;">Except Weekend and Public Holiday</span>
+				  	</td>			  	
+				  </tr>
+				  <tr>
+				  	<td style="position: relative;">
+				  		<span class="td-text" style="position: absolute;top: 0px;">Delivery Charge</span>
+				  	</td>
+				  	<td>
+				  		<input type="radio" name="delivery_charge" id="delivery_charge" value="1">
+				  		<select disabled style="width:125px;"><option>Price Included</option></select><br><br>
+				  		<input type="radio" name="delivery_charge" id="delivery_charge" value="2">
+				  		<select disabled style="width:80px;"><option>Flat Fee</option></select>
+				  		<input type="text" name="flat_fee" id="flat_fee" value="'.$group_data->flat_fee.'" placeholder="$">
+				  		<span style="text-decoration:underline;">Enter Price</span><br><br>
+				  		<input type="radio" name="delivery_charge" id="delivery_charge" value="3">
+				  		<select disabled><option>Select Shippping Rate Table</option></select>				  		
+				  	</td>			  	
+				  </tr>
+				  <tr>
+				  	<td style="position: relative;">
+				  		<span class="td-text" style="position: absolute;top: 0px;">Delivery Cut Off Time</span>
+				  	</td>
+				  	<td>
+				  		<input type="radio" name="cut_off_time" id="cut_off_time" value="0">None Cut Off Time<br><br>
+				  		<input type="radio" name="cut_off_time" id="cut_off_time" value="1">Select Days and Cut Off Time
+				  	</td>			  	
+				  </tr>
+				  <tr>
+				  	<td></td>
+				  	<td>
+				  		<table class="group-table">
+				  		  <thead>
+				  		  	<tr>
+				  		  		<td colspan="2">Order Day</td>
+				  		  		<td colspan="2">Cut Off Time</td>
+				  		  		<td>Delivery Day</td>
+				  		  	</tr>
+				  		  </thead>
+				  		  <tbody>'.$week_body.'</tbody>
+				  		</table>
+				  	</td>			  	
+				  </tr>			  
+				</table>
+			</div>			
+		  </form>
+		</div>
+		<div>
+  	  		<input type="hidden" name="customer_row_id" id="customer_row_id" value="'.$row_id.'">
+  	  		<input type="button" name="customer_cancel_btn" id="customer_cancel_btn" class="document-button" value="Cancel">
+  	  		<input type="submit" name="customer_save_btn" id="customer_save_btn" class="document-button customer-save-btn" value="Save">
+		</div>		
+	';
+
+	return $content;
+}
+
 ?>

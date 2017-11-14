@@ -303,3 +303,16 @@
 .product-table tr td:nth-child(5) {
     width: 15%;
 }
+/* Group List Page */
+.group-table > tbody > tr > td:first-child {
+    width: 200px;
+}
+.group-table tr td{
+    padding-bottom: 15px;
+}
+.group-table select, .group-table input[type=text] {
+    width: 200px;
+}
+#flat_fee {
+    width: 40px;
+}

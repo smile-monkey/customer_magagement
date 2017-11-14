@@ -154,6 +154,9 @@ if (!class_exists(Customer_Management)){
 			$add_type = $_POST['add_type'];
 			$row_id = $_POST['row_id'];
 			switch ($add_type) {
+				case 'group':
+					echo get_group_content($row_id);
+					break;				
 				case 'price':
 					echo get_price_content($row_id);
 					break;				
