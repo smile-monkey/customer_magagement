@@ -137,7 +137,7 @@ if (!class_exists(Customer_Management)){
 					$content = DisplayGroup();
 					break;
 				case 'price_list':
-					$content = DisplayGroup();
+					$content = DisplayPrice();
 					break;
 				case 'payment_list':
 					$content = DisplayPayment();
@@ -154,6 +154,9 @@ if (!class_exists(Customer_Management)){
 			$add_type = $_POST['add_type'];
 			$row_id = $_POST['row_id'];
 			switch ($add_type) {
+				case 'price':
+					echo get_price_content($row_id);
+					break;				
 				case 'payment':
 					echo get_payment_content($row_id);
 					break;
@@ -259,6 +262,9 @@ if (!class_exists(Customer_Management)){
 			$customer_content_type = $_POST['customer_content_type'];
 			parse_str($_POST['form_data'],$save_data);
 			switch ($customer_content_type) {
+				case 'price':
+					$result = save_price_content($save_data);
+					break;				
 				case 'payment':
 					$result = save_payment_content($save_data);
 					break;

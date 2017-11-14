@@ -12,6 +12,8 @@ global $wpdb;
 define("customer_tb", $wpdb->prefix."woocommerce_customers");
 define("customer_doc_tb", $wpdb->prefix."woocommerce_customers_doc");
 define("customers_payment", $wpdb->prefix."woocommerce_customers_payment");
+define("customers_price", $wpdb->prefix."woocommerce_customers_price");
+define("customers_product", $wpdb->prefix."woocommerce_customers_product");
 
 function create_customer_table() {
 
@@ -49,9 +51,55 @@ function create_customer_table() {
 				) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_520_ci";
 		$wpdb->query($query);
 
+		$query = "CREATE TABLE IF NOT EXISTS`".customers_price."` (
+				  `id` int(11) NOT NULL AUTO_INCREMENT,
+				  `price_name` varchar(255) COLLATE utf8mb4_unicode_520_ci DEFAULT NULL,
+				  `price_rule` tinyint(1) DEFAULT NULL COMMENT '1:markup or markdown, 0:manual',
+				  `select_rule` tinyint(1) DEFAULT NULL COMMENT '1:markup, 0:markdown',
+				  `price_percentage` int(11) DEFAULT NULL,
+				  `number_round` tinyint(1) DEFAULT NULL COMMENT '1:number round',
+				  PRIMARY KEY (`id`)
+				) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_520_ci";
+		$wpdb->query($query);
+
+		$query = "CREATE TABLE IF NOT EXISTS`".customers_product."` (
+				  `id` int(11) NOT NULL AUTO_INCREMENT,
+				  `price_id` int(11) DEFAULT NULL,
+				  `post_id` int(11) DEFAULT NULL,
+				  `product_price` int(11) DEFAULT NULL,
+				  PRIMARY KEY (`id`)
+				) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_520_ci";
+		$wpdb->query($query);
+
 	} catch (Exception $e) {
 		echo $e;
 	}			
+}
+function save_customers_data($save_data, $table_name, $row_id=null) {
+	global $wpdb;
+	$save_row_id = '';
+	try{
+		// Insert new row in Customers Table
+		$customer_data = array();
+		$colNames = $wpdb->get_col("DESC {$table_name}", 0);
+		foreach ($colNames as $colname) {
+			if (isset($save_data[$colname])) {
+				$customer_data[$colname] = $save_data[$colname];
+			}
+		}
+		if (sizeof($customer_data) > 0) {
+			if ($row_id){
+				$wpdb->update($table_name,$customer_data, array('id'=>$row_id));
+				$save_row_id = $row_id;
+			}else {
+				$wpdb->insert($table_name,$customer_data);
+				$save_row_id = $wpdb->insert_id;
+			}
+		}
+	} catch (Exception $e) {
+		echo $e;
+	}
+	return $save_row_id;
 }
 
 function get_customer_list() {
@@ -251,7 +299,6 @@ function send_customer_document($doc_id) {
 function get_payment_row_data($terms_id=null) {
 	global $wpdb;
 	try {
-		$where = "";
 		if ($terms_id){
 			$rows = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM ".customers_payment." WHERE `id` = %d", $terms_id));
 		}else {
@@ -282,6 +329,70 @@ function save_payment_content($save_data) {
 	return $result;
 }
 
+/*
+ * Get Price List or Price Row
+ */
+function get_price_row_data($row_id=null) {
+	global $wpdb;
+	try {
+		if ($row_id){
+			$rows = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM ".customers_price." WHERE `id` = %d", $row_id));
+		}else {
+			$rows = $wpdb->get_results( "SELECT * FROM ".customers_price);
+		}
+		return $rows;
+    } catch (Exception $e) {
+    	echo $e;
+    }
+}
+/*
+ * Save Price List
+ */
+function save_price_content($save_data) {
+	global $wpdb;
+	$result = false;
+	if (!$save_data['price_name']) return false;
+
+	if (!isset($save_data['number_round'])) $save_data['number_round'] = 0;
+
+	try {
+		$save_data['price_id'] = save_customers_data($save_data, customers_price, $save_data['customer_row_id']);
+		$result = true;
+		if ($save_data['price_rule']==0) {
+			foreach ($save_data as $key => $price) {
+				$key_array = explode("_", $key);
+				if ($key_array[0] == "post"){
+					$save_data['post_id'] = $key_array[1];
+					$save_data['product_price'] = $price;
+					$product_row = $wpdb->get_row( $wpdb->prepare( "SELECT id FROM ".customers_product." WHERE price_id = %d and post_id=%d", $save_data['price_id'],$save_data['post_id']));
+					save_customers_data($save_data, customers_product, $product_row->id);
+				}
+			}
+		}
+	} catch (Exception $e) {
+		echo $e;
+	}
+	return $result;
+}
+
+/*
+ * Get Product Price List
+ */
+function get_product_prices($price_id) {
+	global $wpdb;
+	$product_prices = array();
+	try {
+		$rows = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM ".customers_product." WHERE `price_id` = %d", $price_id));
+		if (sizeof($rows)>0) {
+			foreach ($rows as $row) {
+				$product_prices[$row->post_id] = $row->product_price;
+			}
+		}
+	} catch (Exception $e) {
+		echo $e;
+	}
+	return $product_prices;
+}
 
 if(isset($_POST['doc_save_btn'])) {
 	$save_data = $_POST;

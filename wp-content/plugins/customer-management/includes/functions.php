@@ -49,6 +49,79 @@ function DisplayCustomer() {
 	return $content;
 }
 
+function DisplayGroup() {
+	$group_data = array();
+	// $group_data = get_group_row_data();
+	$content = '
+		<table class="widefat striped customer-group-list">
+			<thead>
+				<tr>
+					<td style="width: 30%;">Group ID</td>
+					<td>Group Name</td>
+					<td>Action</td>
+				</tr>
+			</thead>
+			<tbody>';
+	if (sizeof($group_data)>0) {
+		foreach ($group_data as $row) {
+			$content .= '<tr>
+				<td>'.$row->id.'</td>
+				<td>'.$row->due_in_days.'</td>
+				<td class="user_actions column-user_actions">
+				  <p><a class="button tips edit customer-content-edit" data-row-id="'.$row->id.'" data-type="group"></a></p>
+				</td>
+			</tr>';
+		}
+	} else {
+		$content .= '<tr style="text-align:center;"><td colspan="3">No Results</td></tr>';
+	}
+	$content .='</tbody>
+		</table>';
+	return $content;
+}
+
+function DisplayPrice() {
+	$price_data = get_price_row_data();
+	$content = '
+		<table class="widefat striped payment-list">
+			<thead>
+				<tr>
+					<td style="width: 30%;">ID</td>
+					<td>Price List Name</td>
+					<td>Details</td>
+					<td>Action</td>
+				</tr>
+			</thead>
+			<tbody>';
+	if (sizeof($price_data)>0) {
+		foreach ($price_data as $row) {
+			if ($row->price_rule == 1){
+				$detail = $row->price_percentage."% ";
+				if ($row->select_rule == 1) {
+					$detail .= "Markup Price";
+				}else {
+					$detail .= "Markdown Price";
+				}
+			} else {
+				$detail = "Manual Price";
+			}
+			$content .= '<tr>
+				<td>'.$row->id.'</td>
+				<td>'.$row->price_name.'</td>
+				<td>'.$detail.'</td>
+				<td class="user_actions column-user_actions">
+				  <p><a class="button tips edit customer-content-edit" data-row-id="'.$row->id.'" data-type="price"></a></p>
+				</td>
+			</tr>';
+		}
+	} else {
+		$content .= '<tr style="text-align:center;"><td colspan="4">No Results</td></tr>';
+	}
+	$content .='</tbody>
+		</table>';
+	return $content;
+}
+
 function DisplayPayment() {
 	$payment_data = get_payment_row_data();
 	$content = '
@@ -73,53 +146,11 @@ function DisplayPayment() {
 				</td>
 			</tr>';
 		}
+	} else {
+		$content .= '<tr style="text-align:center;"><td colspan="4">No Results</td></tr>';
 	}
 	$content .='</tbody>
 		</table>';
-	return $content;
-}
-
-function DisplayGroup() {
-	$content = '
-		<table class="widefat striped group-table">
-			<thead>
-				<tr>
-					<td>Group ID</td>
-					<td>Name (Last, First)</td>
-					<td>Company</td>
-					<td>Total Orders</td>
-					<td>Amount Due</td>
-					<td>Action</td>
-				</tr>
-			</thead>
-			<tbody>
-				<tr>
-					<td>123456</td>
-					<td>Kinjal Patel Director</td>
-					<td>Hi-TECH LIMITED</td>
-					<td>0</td>
-					<td>$0.00</td>
-					<td class="user_actions column-user_actions">
-					  <p>
-						<a class="button tips edit" href="#">Edit</a>
-					  </p>
-					</td>
-				</tr>
-				<tr>
-					<td>56789</td>
-					<td>Frank Firely Director</td>
-					<td>COCA COLA LIMITED</td>
-					<td>0</td>
-					<td>$0.00</td>
-					<td class="user_actions column-user_actions">
-					  <p>
-						<a class="button tips edit" href="#">Edit</a>
-					  </p>
-					</td>
-				</tr>
-			</tbody>
-		</table>
-	';
 	return $content;
 }
 
@@ -512,6 +543,7 @@ function get_customer_login($customer_id) {
 	  		  	</td>
 	  		  	<td>	  		  		
 	  		  		<input name="user_pass" type="password" id="user_pass" value="'.$user_info->data->user_pass.'" disabled>
+	  		  		<a href="/my-account/lost-password/" class="generate-password">Generate Password</a>
 	  		  	</td>
 	  		  </tr>
 		  	  <tr>
@@ -569,6 +601,141 @@ function get_payment_content($terms_id=null) {
 		</div>
 	';
 
+	return $content;
+}
+/*
+ * Display Add New Price
+ */
+function get_price_content($price_id=null) {
+	$price_data = array();
+	$page_title = "Add New Price List";
+	if ($price_id){
+		$page_title = "Price List";
+		$price_data = get_price_row_data($price_id);
+	}
+	$product_prices = get_product_prices($price_id);
+
+	// Price Rule Checked
+	$price_rule_checked = array();
+	if ($price_data[0]->price_rule == 1 ) {
+		$price_rule_checked[0] = "checked";
+	} else {
+		$price_rule_checked[1] = "checked";
+	}
+	// Select Rule Selected
+	$select_rule_checked = array();
+	if ($price_data[0]->select_rule == 1 ) {
+		$select_rule_checked[0] = "selected";
+	} else {
+		$select_rule_checked[1] = "selected";
+	}
+
+	if (!$price_id) {
+		$price_rule_checked = array("checked","");
+		$select_rule_checked[0] = "selected";
+		$select_rule_checked[1] = "";
+	}
+	
+	// Number Round Checked
+	$number_round_checked = $price_data[0]->number_round == 1 ? "checked" : "";
+
+	$args = array(
+	  'post_type'   => 'product',
+	  'posts_per_page' => -1,
+	  'orderby'     => array('date'=>'DESC','title'=>'ASC')
+	);
+	$post_data = get_posts( $args );
+	$product_content .= '
+		<table class="widefat striped product-table">
+		  <thead>
+		  	<tr>
+		  	  <td>SKU</td>
+		  	  <td>Product Name</td>
+		  	  <td>Categories</td>
+		  	  <td>Stock Status</td>
+		  	  <td>Regular Price</td>
+		  	  <td>New Price</td>
+		  	</tr>
+		  </thead>
+		  <tbody>
+	';
+	if (sizeof($post_data)>0) {
+		foreach ($post_data as $post) {
+			$product = wc_get_product($post->ID);
+			$product_row = $product->data;
+			$in_stock = $product->is_in_stock() ? 'In Stock' : '';
+			$product_content .= '
+				<tr>
+				  <td>'.$product->get_sku().'</td>
+				  <td>'.$post->post_title.'</td>
+				  <td>'.$product->get_categories( ', ',  _n( '', 'Category:', sizeof( get_the_terms( $post->ID, 'product_cat' ) ), 'woocommerce' ) . ' ', '' ).'</td>
+				  <td>'.$in_stock.'</td>
+				  <td>'.$product->get_regular_price().'</td>
+				  <td style="padding-bottom: 0px;"><input type="text" name="post_'.$post->ID.'" id="post_'.$post->ID.'" style="width:70px;" value="'.$product_prices[$post->ID].'"></td>
+				</tr>
+			';
+		}
+	}else {
+		$product_content .= '<tr style="text-align:center;"><td colspan="6">No Results</td></tr>';
+	}
+	$product_content .= '</tbody></table>';
+
+	$content .= '
+		<div style="height:65px;">
+			<div style="float:left;">
+				<h1>'.$page_title.'</h1>
+			</div>
+		</div>
+		<div>
+		  <form method="post" id="customer_content_data" action="" enctype="multipart/form-data">
+			<table class="price-table">
+			  <tr>
+			  	<td>
+			  		<span class="td-text">Name</span>
+			  	</td>
+			  	<td>
+			  		<input type="text" name="price_name" id="price_name" value="'.$price_data[0]->price_name.'">
+			  	</td>			  	
+			  </tr>
+			  <tr>
+			  	<td style="padding-bottom:50px;">
+			  	  <span class="td-text">Price Rule</span>
+			  	</td>
+			  	<td>
+			  	  <input type="radio" name="price_rule" class="price-rule" value="1" '.$price_rule_checked[0].'> Markup OR Markdown the item rates by an percentage.<br><br>
+			  	  <input type="radio" name="price_rule" class="price-rule" value="0" '.$price_rule_checked[1].'> Enter a price manually for each item
+			  	</td>
+			  </tr>
+			  <tr>
+			  	<td style="padding-bottom:50px;">
+			  	  <span class="td-text">Percentage</span>
+			  	</td>			  
+			  	<td>
+			  	  <select name="select_rule" id="select_rule">
+			  	  	<option value="1" '.$select_rule_checked[0].'>MarkUp %</option>
+			  	  	<option value="0" '.$select_rule_checked[1].'>MarkDown %</option>
+			  	  </select>
+			  	  <input type="number" name="price_percentage" id="price_percentage" min="0" style="width: 60px;" value="'.$price_data[0]->price_percentage.'"> %<br>
+			  	  <input type="checkbox" name="number_round" id="number_round" '.$number_round_checked.'> Round off to nearest whole number
+			  	</td>
+	  	  	  </tr>
+			  <tr id="product_list">
+			  	<td>
+			  	  <span class="td-text">Enter New Price</span>
+			  	</td>
+			  	<td>'.$product_content.'</td>
+			  </tr>
+			  <tr>
+			  	<td colspan="2">
+		  	  		<input type="hidden" name="customer_row_id" id="customer_row_id" value="'.$price_id.'">
+		  	  		<input type="button" name="customer_cancel_btn" id="customer_cancel_btn" class="document-button" value="Cancel">
+		  	  		<input type="submit" name="customer_save_btn" id="customer_save_btn" class="document-button customer-save-btn" value="Save">
+		  	  	</td>
+	  	  	  </tr>			  
+			</table>
+		  </form>
+		</div>
+	';
 	return $content;
 }
 ?>
