@@ -226,3 +226,93 @@
     margin-right: 15px;
     cursor: pointer;
 }
+/* login page */
+.generate-password {
+    text-decoration: none;
+    padding: 5px 10px;
+    border: 1px solid #444;
+    color: #444;
+    font-weight: 600;
+    background-color: #e5e5e5;
+}
+.generate-password:hover, .generate-password:active {
+    color: #000;
+}
+/* Payment Terms Page */
+#terms_name {
+    width: 200px;
+}
+#group_cancel_btn {
+    margin-top: 50px;
+}
+.payment-table {
+    margin-top: 20px;
+}
+.payment-table tr {
+    height: 40px;
+}
+.payment-table tr td:first-child {
+    padding-right: 50px;
+}
+/* Price List Page */
+.price-table > tbody > tr > td:first-child {
+    width: 150px;
+}
+.price-table tr td{
+    padding-bottom: 15px;
+}
+#product_list {
+    display: none;
+}
+#product_list > td:first-child {
+    position: relative;
+}
+#product_list > td:first-child span{
+    vertical-align: text-bottom;
+    position: absolute;
+    top: 0px;
+}
+.product-table {
+    width: 80%;
+}
+.product-table thead, .product-table tbody tr {
+    display: table;
+    width: 100%;
+    table-layout: fixed;
+}
+.product-table tbody {
+    display:block;
+    height:300px;
+    overflow:auto;
+}
+.product-table thead {
+    width: calc( 100% - 1em )/* scrollbar is average 1em/16px width, remove it from thead width */
+}
+.product-table tr td:first-child {
+    width: 10%;
+}
+.product-table tr td:nth-child(2) {
+    width: 20%;
+}
+.product-table tr td:nth-child(3) {
+    width: 30%;
+}
+.product-table tr td:nth-child(4) {
+    width: 15%;
+}
+.product-table tr td:nth-child(5) {
+    width: 15%;
+}
+/* Group List Page */
+.group-table > tbody > tr > td:first-child {
+    width: 200px;
+}
+.group-table tr td{
+    padding-bottom: 15px;
+}
+.group-table select, .group-table input[type=text] {
+    width: 200px;
+}
+#flat_fee {
+    width: 40px;
+}

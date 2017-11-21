@@ -65,6 +65,7 @@ if (!class_exists(Customer_Management)){
 			add_action( 'wp_ajax_get_document_body', array(&$this, 'get_document_body'));
 			add_action ('wp_ajax_process_document_action', array(&$this, 'process_document_action'));
 			add_action ('wp_ajax_save_customer_content_data', array(&$this, 'save_customer_content_data'));
+
 		}
 
 		/**
@@ -83,15 +84,17 @@ if (!class_exists(Customer_Management)){
 		}
 		
 		function Customer_Management_Init() {
+
 			// wp_enqueue_script( 'jquery-1-12-1-js', PLUGINURL.'assets/js/jquery-1.12.1.min.js');
+
 			wp_enqueue_style( 'woocommerce-admin-css', PLUGINURL.'assets/css/woocommerce-admin.min.css');
 			wp_enqueue_style( 'multiSwith-css', PLUGINURL.'assets/css/multi-switch.min.css');
 			wp_enqueue_script( 'multiSwith-js', PLUGINURL.'assets/js/multi-switch.js');
 
-			wp_enqueue_script( 'customerManagement-js', PLUGINURL.'assets/js/customer.min.js');
+			wp_enqueue_script( 'customerManagement-js', PLUGINURL.'assets/js/customer.min.js',array('jquery', 'jquery-ui-core', 'jquery-ui-datepicker'));
 			wp_enqueue_style( 'customerManagement-css', PLUGINURL.'assets/css/customer.min.css');
+			wp_enqueue_style( 'jquery-ui-datepicker-css', PLUGINURL.'assets/jquery-ui.min.css');
 			wp_localize_script( 'customerManagement-js', 'ajax_object', array( 'ajaxurl' => admin_url( 'admin-ajax.php' ),'adminurl' => admin_url('admin.php?page=customer_management') ) );
-
 		}
 
 		function Customer_management_Main() {

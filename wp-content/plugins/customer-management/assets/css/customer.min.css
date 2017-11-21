@@ -316,3 +316,13 @@
 #flat_fee {
     width: 40px;
 }
+
+/* Transaction Page */
+#order_end_date {
+    margin-right: 50px;
+}
+.order-date {
+    width: 120px;
+    color: #777 !important;
+    text-align: center;
+}

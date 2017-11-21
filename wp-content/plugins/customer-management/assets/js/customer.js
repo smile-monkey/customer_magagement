@@ -20,6 +20,7 @@ jQuery(function ($) {
 			data: data,
 			success: function(response){
 				$("#main_content").html(response);
+				customer_action();
 			},
 			error: function(XMLHttpRequest, textStatus, errorThrown) {
 
@@ -28,16 +29,43 @@ jQuery(function ($) {
 	});
 
 	$("#customer_select").on("change", function(e){
+
 		if (e.target.value == 0) return;
-		$("#user_login").val("");
-		$("#user_pass").val("");
-		if (e.target.value == 'Customer') {
-			$(".customer-body").hide();
-			$(".customer-add").show();
-			$(".group-add").hide();
+
+		$("#user_login").val('');
+		$("#user_pass").val('');
+
+		$(".customer-content").hide();
+		var add_type = e.target.value;
+		var add_body;
+		switch (add_type) {
+			case 'customer':
+				add_body = ".customer-add";
+				break;
+			default:
+				add_body = ".group-add";
+		}
+
+		if (add_type != "customer"){
+			var data = {
+				action: "get_customer_content",
+				add_type: add_type
+			};
+			$.ajax({
+				type: "POST",
+				url: ajaxurl,
+				data: data,
+				success: function(response){
+					$(add_body).html(response);
+					$(add_body).show();
+					group_action(add_type);
+				},
+				error: function(XMLHttpRequest, textStatus, errorThrown) {
+
+				}
+			});
 		} else {
-			// $(".group-add").show();
-			// $(".customer-add").hide();
+			$(add_body).show();
 		}
 	});
 
@@ -47,10 +75,11 @@ jQuery(function ($) {
     	}
     });
 
+// Personal Information Page
+
 	$(".customer-button").on("click", function(e){
+		$(".customer-content").hide();
 		$(".customer-body").show();
-		$(".customer-add").hide();
-		$(".group-add").hide();
 		$("#customer_select").val(0);
 	});
 
@@ -59,8 +88,8 @@ jQuery(function ($) {
 			$("#shipping_check").val(1);
 
 			$("#shipping_address_1").val($("#billing_address_1").val());
-			$("#shipping_address_2").val($("#billing_address_2").val());
 			$("#shipping_city").val($("#billing_city").val());
+			$("#shipping_state").val($("#billing_state").val());
 			$("#shipping_postcode").val($("#billing_postcode").val());
 			$("#shipping_country").val($("#billing_country").val());
 		} else {			
@@ -113,6 +142,8 @@ jQuery(function ($) {
 			}
 		});		
 	});
+
+// Documents Page
 
 	$("#doc_btn").on("click", function(e){
 		$(".popup_background").show();
@@ -178,6 +209,85 @@ jQuery(function ($) {
 
 				}
 			});	
+		});
+	}
+
+// Payment Terms Add Page
+	group_action = function(add_type) {
+		$("#customer_cancel_btn").on("click", function(e){
+			$(".customer-content").hide();
+			$(".customer-body").show();
+			$("#customer_select").val(0);
+		});
+		$("#customer_save_btn").on("click", function(e){
+			e.preventDefault();
+			var form_data = $("#customer_content_data").serialize();
+			var data = {
+				action: "save_customer_content_data",
+				customer_content_type: add_type,
+				form_data: form_data
+			};
+			$.ajax({
+				type: "POST",
+				url: ajaxurl,
+				data: data,
+				success: function(response){
+					$("#"+add_type+"_list").trigger("click");
+					$("#customer_cancel_btn").trigger("click");
+				},
+				error: function(XMLHttpRequest, textStatus, errorThrown) {
+
+				}
+			});	
+		});
+
+		if ($('input[name=price_rule]:checked').val() == 0) {
+		 	$("#product_list").show();
+		}
+		if ($("#number_round").is(":checked")){
+			$("#number_round").val(1);
+		}
+
+		$(".price-rule").on("change", function(e){
+			if (e.target.value == 1) {
+				$("#product_list").hide();
+			} else {
+				$("#product_list").show();
+			}
+		});
+
+		$("#number_round").on("change", function(e){
+			if (this.checked){
+				$("#number_round").val(1);
+			}else {
+				$("#number_round").val(0);
+			}
+		});		
+	}
+// Customer Content Update Page
+	customer_action = function() {
+		$(".customer-content-edit").on("click", function(e){
+			var add_type = this.getAttribute("data-type");
+			var row_id = this.getAttribute("data-row-id");
+			var data = {
+				action: "get_customer_content",
+				add_type: add_type,
+				row_id: row_id
+			};
+			$.ajax({
+				type: "POST",
+				url: ajaxurl,
+				data: data,
+				success: function(response){
+					$(".group-add").html(response);
+					$(".customer-body").hide();
+					$(".group-add").show();
+					group_action(add_type);
+				},
+				error: function(XMLHttpRequest, textStatus, errorThrown) {
+
+				}
+			});
 		});
 	}
 });

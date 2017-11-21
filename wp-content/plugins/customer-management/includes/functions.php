@@ -524,12 +524,39 @@ function get_customer_info($customer_id) {
 }
 
 function get_customer_transaction($customer_id) {
+
+	$transaction = '';
 	$content = '
-		<div>
-			<h1>Transactions</h1>
+		<div style="height:65px;">
+			<div style="float:left;">
+				<h1>Transactions</h1>
+			</div>
+			<div style="float:right;margin-top: 10px;">
+				<input type="text" name="order_start_date" id="order_start_date" class="order-date" required pattern="[0-9]{4}-[0-9]{2}-[0-9]{2}" placeholder="yyyy-mm-dd">
+				<span>–</span>
+				<input type="text" name="order_end_date" id="order_end_date" class="order-date" required pattern="[0-9]{4}-[0-9]{2}-[0-9]{2}" placeholder="yyyy-mm-dd">
+				<input type="text" name="order_search" id="order_search">
+				<input type="button" name="order_search_btn" id="order_search_btn" class="document-button" value="Search">
+			</div>
 		</div>
 		<div>
-
+			<table class="widefat striped">
+				<thead>
+					<tr>
+						<td>Order<br>Status</td>
+						<td>Date</td>
+						<td>Order<br>Number</td>
+						<td>Delivery Address</td>
+						<td>Note</td>
+						<td>Shipping Method</td>
+						<td>Order Account</td>
+						<td>Balance Due</td>
+						<td>Action</td>
+					</tr>
+				</thead>
+				<tbody id="transaction_body">'.$transaction.'
+				</tbody>
+			</table>
 		</div>
 	';
 	return $content;
