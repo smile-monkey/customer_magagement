@@ -26,7 +26,7 @@ function DisplayCustomer() {
 				if (!$user_info) continue;
 				$content .='
 					<tr>
-						<td>'.$customer->user_id.'</td>
+						<td>'.$customer->id.'</td>
 						<td>'.$user_info['first_name'][0].' '.$user_info['last_name'][0].'</td>
 						<td>'.$customer->company.'</td>
 						<td>0</td>
@@ -34,11 +34,11 @@ function DisplayCustomer() {
 						<td class="user_actions column-user_actions">
 						  <p>
 							<a class="button tips edit" href="'.admin_url( 'admin.php?page=customer_management&main_tab=customer_info&customer_id='.$customer->id ).'">Edit</a>
-							<a class="button tips dashicons dashicons-migrate" title="Payment is overdue"></a>
 						  </p>
 						</td>
 					</tr>
 				';
+							// <a class="button tips dashicons dashicons-migrate" title="Payment is overdue"></a>
 			}
 		}
 
@@ -50,8 +50,7 @@ function DisplayCustomer() {
 }
 
 function DisplayGroup() {
-	$group_data = array();
-	// $group_data = get_group_row_data();
+	$group_data = get_group_row_data();
 	$content = '
 		<table class="widefat striped customer-group-list">
 			<thead>
@@ -66,7 +65,7 @@ function DisplayGroup() {
 		foreach ($group_data as $row) {
 			$content .= '<tr>
 				<td>'.$row->id.'</td>
-				<td>'.$row->due_in_days.'</td>
+				<td>'.$row->group_name.'</td>
 				<td class="user_actions column-user_actions">
 				  <p><a class="button tips edit customer-content-edit" data-row-id="'.$row->id.'" data-type="group"></a></p>
 				</td>
@@ -158,7 +157,7 @@ function DisplayPayment() {
  *
  */
 function add_customer() {
-	$group_options = get_group_options();
+	$group_options = get_customer_group_options();
     $country_options = get_country_options("US");
 ?>
   <div class="add-header">
@@ -320,7 +319,7 @@ function get_group_options($selected_group=null) {
 function get_customer_group_options($selected_group=null) {
 
 	$group_data = array();
-	// $group_data = get_group_row_data();
+	$group_data = get_group_row_data();
 
 	if (sizeof($group_data) > 0) {
 		$group_options = $selected = '';
@@ -357,26 +356,6 @@ function get_price_options($selected_price=null) {
 }
 
 /*
- * Get payment method options
- */
-function get_payment_method_options($selected_method=null) {
-
-	$method_data = array();
-	// $method_data = get_payment_method_data();
-
-	if (sizeof($method_data) > 0) {
-		$method_options = $selected = '';
-		foreach ($method_data as $method) {
-			$selected = $method->id ==$selected_method ? 'selected="selected"' : '';
-			$method_options .= "<option value='".$method->id."' ".$selected.">".$method->method_name."</option>";
-		}
-	}else {
-		$method_options = '<option value="" selected="selected">Select a payment method…</option>';
-	}
-
-	return $method_options;
-}
-/*
  * Get payment terms options
  */
 function get_payment_terms_options($selected_terms=null) {
@@ -397,26 +376,6 @@ function get_payment_terms_options($selected_terms=null) {
 	return $terms_options;
 }
 
-/*
- * Get Delivery Method options
- */
-function get_delivery_options($selected_delivery=null) {
-
-	$delivery_data = array();
-	// $delivery_data = get_delivery_data();
-
-	if (sizeof($delivery_data) > 0) {
-		$delivery_options = $selected = '';
-		foreach ($delivery_data as $delivery) {
-			$selected = $delivery->id ==$selected_delivery ? 'selected="selected"' : '';
-			$delivery_options .= "<option value='".$delivery->id."' ".$selected.">".$delivery->delivery_name."</option>";
-		}
-	}else {
-		$delivery_options = '<option value="" selected="selected">Select a delivery method…</option>';
-	}
-
-	return $delivery_options;
-}
 /*
  * Get Week options
  */
@@ -459,7 +418,7 @@ function get_customer_info($customer_id) {
 	  	  </tr>
 	  	  <tr>
 	  		<td><span class='td-text'>Customer Group:</span></td>
-	  		<td><select id='group_id' name='group_id'>".get_group_options($customer_data->group_id)."</select></td>
+	  		<td><select id='group_id' name='group_id'>".get_customer_group_options($customer_data->group_id)."</select></td>
 	  	  </tr>
 	  	  <tr>
 	  		<td><span class='td-text'>Company Name:</span></td>
@@ -523,9 +482,9 @@ function get_customer_info($customer_id) {
 	return $content;
 }
 
-function get_customer_transaction($customer_id) {
+function get_customer_transaction($customer_id, $start_date=null, $end_date=null, $order_search_box=null) {
+	$transaction = get_transaction_body($customer_id, $start_date, $end_date, $order_search_box);
 
-	$transaction = '';
 	$content = '
 		<div style="height:65px;">
 			<div style="float:left;">
@@ -533,14 +492,15 @@ function get_customer_transaction($customer_id) {
 			</div>
 			<div style="float:right;margin-top: 10px;">
 				<input type="text" name="order_start_date" id="order_start_date" class="order-date" required pattern="[0-9]{4}-[0-9]{2}-[0-9]{2}" placeholder="yyyy-mm-dd">
-				<span>–</span>
+				<span>~</span>
 				<input type="text" name="order_end_date" id="order_end_date" class="order-date" required pattern="[0-9]{4}-[0-9]{2}-[0-9]{2}" placeholder="yyyy-mm-dd">
 				<input type="text" name="order_search" id="order_search">
 				<input type="button" name="order_search_btn" id="order_search_btn" class="document-button" value="Search">
+				<input type="hidden" name="order_customer_id" id="order_customer_id" value="'.$customer_id.'">
 			</div>
 		</div>
 		<div>
-			<table class="widefat striped">
+			<table class="widefat striped transaction-table">
 				<thead>
 					<tr>
 						<td>Order<br>Status</td>
@@ -562,6 +522,75 @@ function get_customer_transaction($customer_id) {
 	return $content;
 }
 
+function get_transaction_body($customer_id, $start_date=null, $end_date=null, $order_search_box=null) {
+
+	$customer_data = get_customer_data($customer_id);
+    $customer_orders = get_posts( array(
+        'numberposts' => - 1,
+        'meta_key'    => '_customer_user',
+        'meta_value'  => $customer_data->user_id,
+        'post_type'   => wc_get_order_types(),
+        'post_status' => array_keys( wc_get_order_statuses()),
+        'date_query' => array(
+	        'relation' => 'AND',
+	        array(
+	            'after' => $start_date,
+	            'inclusive' => true
+	        ),
+	        array(
+	            'before' => $end_date,
+	            'inclusive' => true
+	        )
+        )        
+    ) );
+    // var_dump($end_date);exit;
+	$transaction = '';
+    if (sizeof($customer_orders)>0) {
+	    foreach ( $customer_orders as $customer_order ) {
+	        $order = wc_get_order( $customer_order );
+	        $order_data = $order->get_data();
+	        $order_status_class = "processing";
+	        if ($order_data['status'] == "completed" || $order_data['status'] == "cancelled"){
+	        	$order_status_class = $order_data['status'];
+	        }
+	        $shipping_address = "-";
+	        $order_address = $order_data['shipping'];
+	        if ($order_address['address_1'] || $order_address['address_2'] || $order_address['city'])
+	        	$shipping_address = $order_address['address_1']." ".$order_address['address_2']."<br>".$order_address['city']."-".$order_address['postcode'];
+
+	        if ($order_search_box && strpos($shipping_address, $order_search_box)==false) {
+	        	continue;
+	        }
+	        // var_dump($order_data);
+	        $transaction .= '<tr id="post_'.$order_data['id'].'">
+	        	<td class="order_status column-order_status">
+	        		<mark class="'.$order_status_class.' tips" title="'.ucfirst($order_status_class).'"></mark>
+	        	</td>
+	        	<td>'.date('F d, Y',strtotime($order_data['date_created'])).'</td>
+	        	<td>'.$order_data['number'].'</td>
+	        	<td>'.$shipping_address.'</td>
+	        	<td>'.$order_data['customer_note'].'</td>
+	        	<td></td>
+	        	<td>'.$order_data['total'].'</td>
+	        	<td></td>
+				<td class="user_actions column-user_actions">
+				  <p>
+					<a class="button tips dashicons dashicons-visibility" title="View Order"></a>
+					<a class="button tips dashicons dashicons-welcome-write-blog" title="PDF Invoice"></a>
+					<a class="button tips dashicons dashicons-migrate" title="Send an email"></a>
+				  </p>
+				</td>	        
+	        </tr>';
+
+	    }
+    }
+    if (!$transaction) {
+    	$transaction = '<tr style="text-align:center;"><td colspan="9">No Results</td></tr>';
+    }
+
+// exit;
+	return $transaction;	
+}
 
 function get_customer_price($customer_id) {
 	$content = '
@@ -888,27 +917,49 @@ function get_price_content($price_id=null) {
  * Display Add New Group
  */
 function get_group_content($row_id=null) {
-	$group_data = array();
+	$group_data = $cut_time_off = array();
 	$page_title = "Add New Group";
 	if ($row_id){
 		$page_title = "Update Group";
 		$group_data = get_group_row_data($row_id);
+		$cut_time_off = get_cut_time_row_data($row_id);
+	}
+
+	$payment_opt = $group_data->payment_method == 1 ? array('','selected') : array('selected','');
+	$delivery_opt = $group_data->delivery_method == 1 ? array('','selected') : array('selected','');
+	$delivery_charge = array();
+	if ($group_data->delivery_charge) {
+		$delivery_charge[$group_data->delivery_charge] = 'checked';
+	} else {
+		$delivery_charge[0] = 'checked';
 	}
 
 	$week_body = '';
+	$delivery_cut_time = $group_data->cut_off_time == 1 ? array('','checked') : array('checked','');
+
 	for ($i=1; $i<=7 ; $i++) {
+		$cut_time = $cut_time_off->{'cut_time_'.$i};
+		$chk_status = $cut_time ? 'checked' : '';
+		$week_select = array('selected','');
+		if ($cut_time >= 12) {
+			$cut_time -= 12;
+			$week_select = array('','selected');
+		}
+		$delivery_day = $cut_time_off->{'delivery_day_'.$i};
+
 		$week_body .= '<tr>
-			<td style="width:25px;"><input type="checkbox" name="week_status_'.$i.'" id="week_status_'.$i.'"></td>
+			<td style="width:25px;"><input type="checkbox" name="week_status_'.$i.'" id="week_status_'.$i.'" '.$chk_status.'></td>
 			<td><select disabled style="width:110px">'.get_week_options($i).'</select></td>
-			<td><input type="text" name="week_days_'.$i.'" id="week_days_'.$i.'" style="width:45px;"></td>
+			<td><input type="text" name="cut_time_'.$i.'" id="cut_time_'.$i.'" style="width:45px;" value="'.$cut_time.'"></td>
 			<td><select name="week_select_'.$i.'" id="week_select_'.$i.'" style="width:50px;">
-					<option value="AM">AM</option>
-					<option value="PM">PM</option>
+					<option value="0" '.$week_select[0].'>AM</option>
+					<option value="1" '.$week_select[1].'>PM</option>
 				</select>
 			</td>
-			<td><select name="delivery_select_'.$i.'" id="delivery_select_'.$i.'" style="width:110px">'.get_week_options().'</select></td>
+			<td><select name="delivery_day_'.$i.'" id="delivery_day_'.$i.'" style="width:110px">'.get_week_options($delivery_day).'</select></td>
 		</tr>';
 	}
+
 	$content .= '
 		<div style="height:65px;">
 			<div style="float:left;">
@@ -937,7 +988,7 @@ function get_group_content($row_id=null) {
 				  		<span class="td-text">Price List</span>
 				  	</td>
 				  	<td>
-				  		<select name="price_select" id="price_select">'.get_price_options().'</select>
+				  		<select name="price_id" id="price_id">'.get_price_options($group_data->price_id).'</select>
 				  	</td>			  	
 				  </tr>
 				  <tr>
@@ -945,7 +996,10 @@ function get_group_content($row_id=null) {
 				  		<span class="td-text">Payment Method</span>
 				  	</td>
 				  	<td>
-				  		<select name="method_select" id="method_select">'.get_payment_method_options().'</select>
+				  		<select name="payment_method" id="payment_method">
+				  			<option value="0" '.$payment_opt[0].'>On Account</option>
+				  			<option value="1" '.$payment_opt[1].'>Credit Card</option>
+				  		</select>
 				  	</td>			  	
 				  </tr>
 				  <tr>
@@ -953,7 +1007,7 @@ function get_group_content($row_id=null) {
 				  		<span class="td-text">Payment Terms</span>
 				  	</td>
 				  	<td>
-				  		<select name="terms_select" id="terms_select">'.get_payment_terms_options().'</select>
+				  		<select name="payment_terms" id="payment_terms">'.get_payment_terms_options($group_data->payment_terms).'</select>
 				  	</td>			  	
 				  </tr>
 				</table>
@@ -965,7 +1019,10 @@ function get_group_content($row_id=null) {
 				  		<span class="td-text">Delivery Method</span>
 				  	</td>
 				  	<td>
-				  		<select name="delivery_select" id="delivery_select">'.get_delivery_options().'</select>
+				  		<select name="delivery_method" id="delivery_method">
+				  			<option value="0" '.$delivery_opt[0].'>Local Delivery</option>
+				  			<option value="1" '.$delivery_opt[1].'>Local Courier</option>
+				  		</select>
 				  	</td>			  	
 				  </tr>
 				  <tr>
@@ -983,13 +1040,13 @@ function get_group_content($row_id=null) {
 				  		<span class="td-text" style="position: absolute;top: 0px;">Delivery Charge</span>
 				  	</td>
 				  	<td>
-				  		<input type="radio" name="delivery_charge" id="delivery_charge" value="1">
+				  		<input type="radio" name="delivery_charge" value="0" '.$delivery_charge[0].'>
 				  		<select disabled style="width:125px;"><option>Price Included</option></select><br><br>
-				  		<input type="radio" name="delivery_charge" id="delivery_charge" value="2">
+				  		<input type="radio" name="delivery_charge" value="1" '.$delivery_charge[1].'>
 				  		<select disabled style="width:80px;"><option>Flat Fee</option></select>
 				  		<input type="text" name="flat_fee" id="flat_fee" value="'.$group_data->flat_fee.'" placeholder="$">
 				  		<span style="text-decoration:underline;">Enter Price</span><br><br>
-				  		<input type="radio" name="delivery_charge" id="delivery_charge" value="3">
+				  		<input type="radio" name="delivery_charge" value="2" '.$delivery_charge[2].'>
 				  		<select disabled><option>Select Shippping Rate Table</option></select>				  		
 				  	</td>			  	
 				  </tr>
@@ -998,14 +1055,14 @@ function get_group_content($row_id=null) {
 				  		<span class="td-text" style="position: absolute;top: 0px;">Delivery Cut Off Time</span>
 				  	</td>
 				  	<td>
-				  		<input type="radio" name="cut_off_time" id="cut_off_time" value="0">None Cut Off Time<br><br>
-				  		<input type="radio" name="cut_off_time" id="cut_off_time" value="1">Select Days and Cut Off Time
+				  		<input type="radio" name="cut_off_time" class="cut-off-time" value="0" '.$delivery_cut_time[0].'>None Cut Off Time<br><br>
+				  		<input type="radio" name="cut_off_time" class="cut-off-time" value="1" '.$delivery_cut_time[1].'>Select Days and Cut Off Time
 				  	</td>			  	
 				  </tr>
 				  <tr>
 				  	<td></td>
 				  	<td>
-				  		<table class="group-table">
+				  		<table id="cut_time_table" class="group-table">
 				  		  <thead>
 				  		  	<tr>
 				  		  		<td colspan="2">Order Day</td>
@@ -1015,6 +1072,7 @@ function get_group_content($row_id=null) {
 				  		  </thead>
 				  		  <tbody>'.$week_body.'</tbody>
 				  		</table>
+  	  					<input type="hidden" name="customer_row_id" id="customer_row_id" value="'.$row_id.'">
 				  	</td>			  	
 				  </tr>			  
 				</table>
@@ -1022,7 +1080,6 @@ function get_group_content($row_id=null) {
 		  </form>
 		</div>
 		<div>
-  	  		<input type="hidden" name="customer_row_id" id="customer_row_id" value="'.$row_id.'">
   	  		<input type="button" name="customer_cancel_btn" id="customer_cancel_btn" class="document-button" value="Cancel">
   	  		<input type="submit" name="customer_save_btn" id="customer_save_btn" class="document-button customer-save-btn" value="Save">
 		</div>		

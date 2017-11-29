@@ -14,6 +14,9 @@ define("customer_doc_tb", $wpdb->prefix."woocommerce_customers_doc");
 define("customers_payment", $wpdb->prefix."woocommerce_customers_payment");
 define("customers_price", $wpdb->prefix."woocommerce_customers_price");
 define("customers_product", $wpdb->prefix."woocommerce_customers_product");
+define("customers_group", $wpdb->prefix."woocommerce_customers_group");
+define("customers_cut_off_time", $wpdb->prefix."woocommerce_customers_cut_off_time");
+
 
 function create_customer_table() {
 
@@ -71,10 +74,63 @@ function create_customer_table() {
 				) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_520_ci";
 		$wpdb->query($query);
 
+		$query = "CREATE TABLE IF NOT EXISTS`".customers_group."` (
+				  `id` int(11) NOT NULL AUTO_INCREMENT,
+				  `group_name` varchar(255) COLLATE utf8mb4_unicode_520_ci DEFAULT NULL,
+				  `price_id` int(11) DEFAULT NULL,
+				  `payment_method` tinyint(1) DEFAULT NULL COMMENT '0:On Account, 1: Credit Card',
+				  `payment_terms` int(11) DEFAULT NULL,
+				  `delivery_method` tinyint(1) DEFAULT NULL COMMENT '0:Delivery, 1: Courier',
+				  `delivery_days` int(11) DEFAULT NULL,
+				  `delivery_charge` tinyint(1) DEFAULT NULL COMMENT '0:price,1:flat fee,2:rate table',
+				  `flat_fee` int(11) DEFAULT NULL,
+				  `cut_off_time` tinyint(1) DEFAULT NULL COMMENT '0:none,1:cut off',
+				  PRIMARY KEY (`id`)
+				) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_520_ci";
+		$wpdb->query($query);
+
+		$query = "CREATE TABLE IF NOT EXISTS`".customers_cut_off_time."` (
+				  `id` int(11) NOT NULL AUTO_INCREMENT,
+				  `group_id` int(11) DEFAULT NULL,
+				  `cut_time_1` int(11) DEFAULT NULL,
+				  `delivery_day_1` int(11) DEFAULT NULL,
+				  `cut_time_2` int(11) DEFAULT NULL,
+				  `delivery_day_2` int(11) DEFAULT NULL,
+				  `cut_time_3` int(11) DEFAULT NULL,
+				  `delivery_day_3` int(11) DEFAULT NULL,
+				  `cut_time_4` int(11) DEFAULT NULL,
+				  `delivery_day_4` int(11) DEFAULT NULL,
+				  `cut_time_5` int(11) DEFAULT NULL,
+				  `delivery_day_5` int(11) DEFAULT NULL,
+				  `cut_time_6` int(11) DEFAULT NULL,
+				  `delivery_day_6` int(11) DEFAULT NULL,
+				  `cut_time_7` int(11) DEFAULT NULL,
+				  `delivery_day_7` int(11) DEFAULT NULL,
+				  PRIMARY KEY (`id`)
+				) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_520_ci";
+		$wpdb->query($query);		
+
 	} catch (Exception $e) {
 		echo $e;
 	}			
 }
+/*
+ * Get Customers Data(Customer, Group, Price, Payment Terms)
+ */
+function get_customers_row_data($table_name, $row_id=null) {
+	global $wpdb;
+	try {
+		if ($row_id){
+			$rows = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM ".$table_name." WHERE `id` = %d", $row_id));
+		}else {
+			$rows = $wpdb->get_results( "SELECT * FROM ".$table_name);
+		}
+		return $rows;
+    } catch (Exception $e) {
+    	echo $e;
+    }
+}
+
 function save_customers_data($save_data, $table_name, $row_id=null) {
 	global $wpdb;
 	$save_row_id = '';
@@ -294,6 +350,51 @@ function send_customer_document($doc_id) {
 }
 
 /*
+ * Get Group List or Group Row
+ */
+function get_group_row_data($row_id=null) {
+	return get_customers_row_data(customers_group, $row_id);
+}
+/*
+ * Get Group List or Group Row
+ */
+function get_cut_time_row_data($group_id=null) {
+	global $wpdb;
+	$cut_time_row = $wpdb->get_row($wpdb->prepare("SELECT id FROM ".customers_cut_off_time." WHERE group_id = %d", $group_id));
+	return get_customers_row_data(customers_cut_off_time, $cut_time_row->id);
+}
+
+/*
+ * Save Group List
+ */
+function save_group_content($save_data) {
+	global $wpdb;
+	$result = false;
+	if (!$save_data['group_name']) return $result;
+
+	try {
+		$save_data['group_id'] = save_customers_data($save_data, customers_group, $save_data['customer_row_id']);
+		$result = true;
+		if ($save_data['cut_off_time']==1) {
+			$cut_time = array();
+			$cut_time['group_id'] = $save_data['group_id'];
+			for ($i=1;$i<=7;$i++) {
+				$cut_time['cut_time_'.$i] = $save_data['cut_time_'.$i];
+				$cut_time['delivery_day_'.$i] = $save_data['delivery_day_'.$i];
+				if ($save_data['week_select_'.$i] == 1) {
+					$cut_time['cut_time_'.$i] += 12;
+				}
+			}
+			$cut_time_row = $wpdb->get_row( $wpdb->prepare( "SELECT id FROM ".customers_cut_off_time." WHERE group_id = %d", $save_data['group_id']));
+			save_customers_data($cut_time, customers_cut_off_time, $cut_time_row->id);
+		}
+	} catch (Exception $e) {
+		echo $e;
+	}
+	return $result;
+}
+
+/*
  * Get Payment Terms or Terms list
  */
 function get_payment_row_data($terms_id=null) {
@@ -345,6 +446,7 @@ function get_price_row_data($row_id=null) {
     	echo $e;
     }
 }
+
 /*
  * Save Price List
  */

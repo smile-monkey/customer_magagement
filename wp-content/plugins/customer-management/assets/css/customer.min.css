@@ -41,11 +41,16 @@
 .customer-table thead > tr > td {
     vertical-align: middle;
 }
-.column-user_actions p .dashicons-migrate {
+.column-user_actions p .dashicons {
     width: 2em;
     height: 2em !important;
     padding-top: 0px !important;
 }
+/* General Style */
+.widefat .column-order_status mark {
+    cursor: pointer;
+}
+
 /* Add Customer, Group or View Customer */
 .customer-add, .group-add, .customer-edit {
     margin: 20px;
@@ -113,7 +118,9 @@
     background-size: 28px;
     padding-left: 30px;
 }
-
+#cut_time_table {
+    display: none;
+}
 /* Customer Edit Page */
 #customer_edit_select {
     float: right;
@@ -325,4 +332,7 @@
     width: 120px;
     color: #777 !important;
     text-align: center;
+}
+.transaction-table tr td {
+    vertical-align: middle;
 }

@@ -65,6 +65,7 @@ if (!class_exists(Customer_Management)){
 			add_action( 'wp_ajax_get_document_body', array(&$this, 'get_document_body'));
 			add_action ('wp_ajax_process_document_action', array(&$this, 'process_document_action'));
 			add_action ('wp_ajax_save_customer_content_data', array(&$this, 'save_customer_content_data'));
+			add_action ('wp_ajax_get_transaction_data', array(&$this, 'get_transaction_data'));
 
 		}
 
@@ -93,7 +94,7 @@ if (!class_exists(Customer_Management)){
 
 			wp_enqueue_script( 'customerManagement-js', PLUGINURL.'assets/js/customer.min.js',array('jquery', 'jquery-ui-core', 'jquery-ui-datepicker'));
 			wp_enqueue_style( 'customerManagement-css', PLUGINURL.'assets/css/customer.min.css');
-			wp_enqueue_style( 'jquery-ui-datepicker-css', PLUGINURL.'assets/jquery-ui.min.css');
+			wp_enqueue_style( 'jquery-ui-datepicker-css', 'http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/themes/base/jquery-ui.css');
 			wp_localize_script( 'customerManagement-js', 'ajax_object', array( 'ajaxurl' => admin_url( 'admin-ajax.php' ),'adminurl' => admin_url('admin.php?page=customer_management') ) );
 		}
 
@@ -268,6 +269,9 @@ if (!class_exists(Customer_Management)){
 			$customer_content_type = $_POST['customer_content_type'];
 			parse_str($_POST['form_data'],$save_data);
 			switch ($customer_content_type) {
+				case 'group':
+					$result = save_group_content($save_data);
+					break;				
 				case 'price':
 					$result = save_price_content($save_data);
 					break;				
@@ -276,6 +280,16 @@ if (!class_exists(Customer_Management)){
 					break;
 			}
 			exit($result);
+		}
+
+		// Transaction Page
+		function get_transaction_data() {
+			$customer_id = $_POST['customer_id'];
+			$start_date = $_POST['start_date'];
+			$end_date = $_POST['end_date'];
+			$order_search_box = $_POST['order_search_box'];
+			echo get_transaction_body($customer_id, $start_date, $end_date, $order_search_box);
+			exit;
 		}
 	}
 }
