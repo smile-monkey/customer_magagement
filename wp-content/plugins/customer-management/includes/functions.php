@@ -22,6 +22,8 @@ function DisplayCustomer() {
 			<tbody>';
 		if (sizeof($customer_list)>0) {
 			foreach ($customer_list as $customer) {
+			    $customer_orders = get_total_orders($customer->user_id);
+
 				$user_info = get_user_meta($customer->user_id);
 				if (!$user_info) continue;
 				$content .='
@@ -29,8 +31,8 @@ function DisplayCustomer() {
 						<td>'.$customer->id.'</td>
 						<td>'.$user_info['first_name'][0].' '.$user_info['last_name'][0].'</td>
 						<td>'.$customer->company.'</td>
-						<td>0</td>
-						<td>$0.00</td>
+						<td>'.$customer_orders['orders_count'].'</td>
+						<td>$'.$customer_orders['orders_total'].'</td>
 						<td class="user_actions column-user_actions">
 						  <p>
 							<a class="button tips edit" href="'.admin_url( 'admin.php?page=customer_management&main_tab=customer_info&customer_id='.$customer->id ).'">Edit</a>
@@ -543,7 +545,7 @@ function get_transaction_body($customer_id, $start_date=null, $end_date=null, $o
 	        )
         )        
     ) );
-    // var_dump($end_date);exit;
+    
 	$transaction = '';
     if (sizeof($customer_orders)>0) {
 	    foreach ( $customer_orders as $customer_order ) {
@@ -561,7 +563,7 @@ function get_transaction_body($customer_id, $start_date=null, $end_date=null, $o
 	        if ($order_search_box && strpos($shipping_address, $order_search_box)==false) {
 	        	continue;
 	        }
-	        // var_dump($order_data);
+	        
 	        $transaction .= '<tr id="post_'.$order_data['id'].'">
 	        	<td class="order_status column-order_status">
 	        		<mark class="'.$order_status_class.' tips" title="'.ucfirst($order_status_class).'"></mark>
@@ -575,7 +577,7 @@ function get_transaction_body($customer_id, $start_date=null, $end_date=null, $o
 	        	<td></td>
 				<td class="user_actions column-user_actions">
 				  <p>
-					<a class="button tips dashicons dashicons-visibility" title="View Order"></a>
+					<a class="button tips dashicons dashicons-visibility" title="View Order" href="'.admin_url("post.php?post=".$customer_order->ID."&action=edit").'"></a>
 					<a class="button tips dashicons dashicons-welcome-write-blog" title="PDF Invoice"></a>
 					<a class="button tips dashicons dashicons-migrate" title="Send an email"></a>
 				  </p>
@@ -588,17 +590,125 @@ function get_transaction_body($customer_id, $start_date=null, $end_date=null, $o
     	$transaction = '<tr style="text-align:center;"><td colspan="9">No Results</td></tr>';
     }
 
-// exit;
 	return $transaction;	
 }
 
 function get_customer_price($customer_id) {
+	$customer_info = get_customer_data($customer_id);
+	$group_id = $customer_info->group_id;
+	if ($group_id) {
+		$group_info = get_group_row_data($group_id);
+		$price_id = $group_info->price_id;
+	}
+
+	$price_data = $product_prices = array();
+	if ($price_id){
+		$price_data = get_price_row_data($price_id);
+		$product_prices = get_product_prices($price_id);
+	}
+
+	// Price Rule Checked
+	$price_rule_checked = $price_data[0]->price_rule == 1 ? array('checked','') : array('','checked');
+	// Select Rule Selected
+	$select_rule_checked = $price_data[0]->select_rule == 1 ? array('selected','') : array('','selected');
+
+	if (!$price_id) {
+		$price_rule_checked = array("checked","");
+		$select_rule_checked = array('selected','');
+	}
+	
+	// Number Round Checked
+	$number_round_checked = $price_data[0]->number_round == 1 ? "checked" : "";
+	if ($price_data[0]->price_rule == 1) {
+		$product_content .= '';
+	} else {
+		$args = array(
+		  'post_type'   => 'product',
+		  'posts_per_page' => -1,
+		  'orderby'     => array('date'=>'DESC','title'=>'ASC')
+		);
+		$post_data = get_posts( $args );
+		$product_content .= '
+			<table class="widefat striped product-table">
+			  <thead>
+			  	<tr>
+			  	  <td>SKU</td>
+			  	  <td>Product Name</td>
+			  	  <td>Categories</td>
+			  	  <td>Stock Status</td>
+			  	  <td>Regular Price</td>
+			  	  <td>New Price</td>
+			  	</tr>
+			  </thead>
+			  <tbody>
+		';
+		if (sizeof($post_data)>0) {
+			foreach ($post_data as $post) {
+				$product = wc_get_product($post->ID);
+				$product_row = $product->data;
+				$in_stock = $product->is_in_stock() ? 'In Stock' : '';
+				$product_content .= '
+					<tr>
+					  <td>'.$product->get_sku().'</td>
+					  <td>'.$post->post_title.'</td>
+					  <td>'.$product->get_categories( ', ',  _n( '', 'Category:', sizeof( get_the_terms( $post->ID, 'product_cat' ) ), 'woocommerce' ) . ' ', '' ).'</td>
+					  <td>'.$in_stock.'</td>
+					  <td>'.$product->get_regular_price().'</td>
+					  <td style="padding-bottom: 0px;"><input type="text" name="post_'.$post->ID.'" id="post_'.$post->ID.'" style="width:70px;" value="'.$product_prices[$post->ID].'"></td>
+					</tr>
+				';
+			}
+		}else {
+			$product_content .= '<tr style="text-align:center;"><td colspan="6">No Results</td></tr>';
+		}
+		$product_content .= '</tbody></table>';
+	}
+
 	$content = '
 		<div>
 			<h1>Price List</h1>
 		</div>
 		<div>
-
+		  <form method="post" id="customer_content_data" action="" enctype="multipart/form-data">
+			<table class="price-table">
+			  <tr>
+			  	<td>
+			  		<span class="td-text">Name</span>
+			  	</td>
+			  	<td>
+			  		<input type="text" name="price_name" id="price_name" value="'.$price_data[0]->price_name.'">
+			  	</td>			  	
+			  </tr>
+			  <tr>
+			  	<td style="padding-bottom:50px;">
+			  	  <span class="td-text">Price Rule</span>
+			  	</td>
+			  	<td>
+			  	  <input type="radio" name="price_rule" class="price-rule" value="1" '.$price_rule_checked[0].'> Markup OR Markdown the item rates by an percentage.<br><br>
+			  	  <input type="radio" name="price_rule" class="price-rule" value="0" '.$price_rule_checked[1].'> Enter a price manually for each item
+			  	</td>
+			  </tr>
+			  <tr>
+			  	<td style="padding-bottom:50px;">
+			  	  <span class="td-text">Percentage</span>
+			  	</td>			  
+			  	<td>
+			  	  <select name="select_rule" id="select_rule">
+			  	  	<option value="1" '.$select_rule_checked[0].'>MarkUp %</option>
+			  	  	<option value="0" '.$select_rule_checked[1].'>MarkDown %</option>
+			  	  </select>
+			  	  <input type="number" name="price_percentage" id="price_percentage" min="0" style="width: 60px;" value="'.$price_data[0]->price_percentage.'"> %<br>
+			  	  <input type="checkbox" name="number_round" id="number_round" '.$number_round_checked.'> Round off to nearest whole number
+			  	</td>
+	  	  	  </tr>
+			  <tr class="product-list">
+			  	<td>
+			  	  <span class="td-text">Enter New Price</span>
+			  	</td>
+			  	<td>'.$product_content.'</td>
+			  </tr>		  
+			</table>
+		  </form>
 		</div>
 	';
 	return $content;
@@ -606,12 +716,120 @@ function get_customer_price($customer_id) {
 
 
 function get_customer_delivery($customer_id) {
+	$customer_info = get_customer_data($customer_id);
+	$group_id = $customer_info->group_id;
+
+	$group_data = $cut_time_off = $delivery_charge = array();
+	if ($group_id) {
+		$group_data = get_group_row_data($group_id);
+		$cut_time_off = get_cut_time_row_data($group_id);
+
+		if ($group_data->delivery_charge) {
+			$delivery_charge[$group_data->delivery_charge] = 'checked';
+		} else {
+			$delivery_charge[0] = 'checked';
+		}
+		$delivery_cut_time = $group_data->cut_off_time == 1 ? array('','checked') : array('checked','');
+		
+	}
+
+	$week_body = '';
+
+	for ($i=1; $i<=7 ; $i++) {
+		$cut_time = $cut_time_off->{'cut_time_'.$i};
+		$chk_status = $cut_time ? 'checked' : '';
+		$week_select = array('selected','');
+		if ($cut_time >= 12) {
+			$cut_time -= 12;
+			$week_select = array('','selected');
+		}
+		$delivery_day = $cut_time_off->{'delivery_day_'.$i};
+
+		$week_body .= '<tr>
+			<td style="width:25px;"><input type="checkbox" name="week_status_'.$i.'" id="week_status_'.$i.'" '.$chk_status.'></td>
+			<td><select disabled style="width:110px">'.get_week_options($i).'</select></td>
+			<td><input type="text" name="cut_time_'.$i.'" id="cut_time_'.$i.'" style="width:45px;" value="'.$cut_time.'"></td>
+			<td><select name="week_select_'.$i.'" id="week_select_'.$i.'" style="width:50px;">
+					<option value="0" '.$week_select[0].'>AM</option>
+					<option value="1" '.$week_select[1].'>PM</option>
+				</select>
+			</td>
+			<td><select name="delivery_day_'.$i.'" id="delivery_day_'.$i.'" style="width:110px">'.get_week_options($delivery_day).'</select></td>
+		</tr>';
+	}
+
 	$content = '
 		<div>
 			<h1>Delivery Agreement</h1>
 		</div>
 		<div>
-
+		  <form method="post" id="customer_content_data" action="" enctype="multipart/form-data">
+		    <div>
+				<table class="group-table" style="padding-top: 25px;">
+				  <tr>
+				  	<td>
+				  		<span class="td-text">Delivery Method</span>
+				  	</td>
+				  	<td>
+				  		<select name="delivery_method" id="delivery_method">
+				  			<option value="0" '.$delivery_opt[0].'>Local Delivery</option>
+				  			<option value="1" '.$delivery_opt[1].'>Local Courier</option>
+				  		</select>
+				  	</td>			  	
+				  </tr>
+				  <tr>
+				  	<td style="position: relative;">
+				  		<span class="td-text" style="position: absolute;top: 0px;">Delivery Days</span>
+				  	</td>
+				  	<td>
+				  		<input type="number" name="delivery_days" id="delivery_days" min="0" max="7" style="width: 60px;" value="'.$group_data->delivery_days.'">
+				  		<span style="color: #b7b7b7;">Days in Week</span><br>
+				  		<span style="color: #b7b7b7;">Except Weekend and Public Holiday</span>
+				  	</td>			  	
+				  </tr>
+				  <tr>
+				  	<td style="position: relative;">
+				  		<span class="td-text" style="position: absolute;top: 0px;">Delivery Charge</span>
+				  	</td>
+				  	<td>
+				  		<input type="radio" name="delivery_charge" value="0" '.$delivery_charge[0].'>
+				  		<select disabled style="width:125px;"><option>Price Included</option></select><br><br>
+				  		<input type="radio" name="delivery_charge" value="1" '.$delivery_charge[1].'>
+				  		<select disabled style="width:80px;"><option>Flat Fee</option></select>
+				  		<input type="text" name="flat_fee" id="flat_fee" value="'.$group_data->flat_fee.'" placeholder="$">
+				  		<span style="text-decoration:underline;">Enter Price</span><br><br>
+				  		<input type="radio" name="delivery_charge" value="2" '.$delivery_charge[2].'>
+				  		<select disabled><option>Select Shippping Rate Table</option></select>				  		
+				  	</td>			  	
+				  </tr>
+				  <tr>
+				  	<td style="position: relative;">
+				  		<span class="td-text" style="position: absolute;top: 0px;">Delivery Cut Off Time</span>
+				  	</td>
+				  	<td>
+				  		<input type="radio" name="cut_off_time" class="cut-off-time" value="0" '.$delivery_cut_time[0].'>None Cut Off Time<br><br>
+				  		<input type="radio" name="cut_off_time" class="cut-off-time" value="1" '.$delivery_cut_time[1].'>Select Days and Cut Off Time
+				  	</td>			  	
+				  </tr>
+				  <tr>
+				  	<td></td>
+				  	<td>
+				  		<table class="group-table">
+				  		  <thead>
+				  		  	<tr>
+				  		  		<td colspan="2">Order Day</td>
+				  		  		<td colspan="2">Cut Off Time</td>
+				  		  		<td>Delivery Day</td>
+				  		  	</tr>
+				  		  </thead>
+				  		  <tbody>'.$week_body.'</tbody>
+				  		</table>
+  	  					<input type="hidden" name="customer_row_id" id="customer_row_id" value="'.$row_id.'">
+				  	</td>			  	
+				  </tr>			  
+				</table>
+			</div>			
+		  </form>
 		</div>
 	';
 	return $content;
@@ -1087,5 +1305,30 @@ function get_group_content($row_id=null) {
 
 	return $content;
 }
+function get_total_orders($user_id) {
 
+	$result = array('orders_count'=>0, 'orders_total'=>0);
+
+    $customer_orders = get_posts( array(
+        'numberposts' => - 1,
+        'meta_key'    => '_customer_user',
+        'meta_value'  => $user_id,
+        'post_type'   => wc_get_order_types(),
+        'post_status' => array_keys( wc_get_order_statuses())      
+    ) );
+
+    if (sizeof($customer_orders)>0) {
+    	$result['orders_count'] = count($customer_orders);
+    	$result['orders_total'] = 0;
+	    foreach ( $customer_orders as $customer_order ) {
+	        $order = wc_get_order( $customer_order );
+	        $order_data = $order->get_data();
+	        if ($order_data['status'] != "cancelled") {
+	        	$result['orders_total'] += $order_data['total'];
+	        }
+	    }
+    }
+
+	return $result;	
+}
 ?>

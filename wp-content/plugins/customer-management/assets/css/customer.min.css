@@ -310,6 +310,14 @@
 .product-table tr td:nth-child(5) {
     width: 15%;
 }
+.product-list > td:first-child {
+    position: relative;
+}
+.product-list > td:first-child span{
+    vertical-align: text-bottom;
+    position: absolute;
+    top: 0px;
+}
 /* Group List Page */
 .group-table > tbody > tr > td:first-child {
     width: 200px;
