@@ -30,6 +30,7 @@ define( 'PLUGINURL', plugin_dir_url( __FILE__ ) );
 
 include_once (__DIR__ . '/includes/database.php');
 include_once (__DIR__ . '/includes/functions.php');
+include_once (__DIR__ . '/includes/integration.php');
 
 if (!class_exists(Customer_Management)){
 	/**
@@ -66,6 +67,7 @@ if (!class_exists(Customer_Management)){
 			add_action ('wp_ajax_process_document_action', array(&$this, 'process_document_action'));
 			add_action ('wp_ajax_save_customer_content_data', array(&$this, 'save_customer_content_data'));
 			add_action ('wp_ajax_get_transaction_data', array(&$this, 'get_transaction_data'));
+			
 
 		}
 
@@ -295,5 +297,7 @@ if (!class_exists(Customer_Management)){
 }
 
 $customerManagement = new Customer_Management();
+add_filter('woocommerce_get_price', 'return_custom_price', 10, 2);
+add_action( 'woocommerce_before_calculate_totals', 'add_custom_price' );
 
 ?>

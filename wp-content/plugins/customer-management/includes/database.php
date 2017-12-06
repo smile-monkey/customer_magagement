@@ -496,6 +496,22 @@ function get_product_prices($price_id) {
 	return $product_prices;
 }
 
+/*
+ * Get User Price info by User ID
+ */
+function getUserPriceInfo($user_id) {
+	global $wpdb;
+	try {
+		$price_row = $wpdb->get_row( $wpdb->prepare("SELECT p.* FROM ".customer_tb." AS c
+				JOIN ".customers_group." AS g ON c.`group_id` = g.`id`
+				JOIN ".customers_price." AS p ON g.`price_id` = p.id
+				WHERE c.`user_id` = %d",$user_id));
+		return $price_row;
+	} catch (Exception $e) {
+		return $e;
+	}
+}
+
 if(isset($_POST['doc_save_btn'])) {
 	$save_data = $_POST;
 	$doc_file_name = $_FILES['doc_file']['name'];
