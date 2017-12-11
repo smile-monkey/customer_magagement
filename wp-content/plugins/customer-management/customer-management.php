@@ -241,6 +241,9 @@ if (!class_exists(Customer_Management)){
 				case 'customer_login':
 					save_customer_login($save_data);
 					break;
+				case 'customer_price':
+					save_customer_price($save_data);
+					break;					
 			}			
 			exit("ok");
 		}

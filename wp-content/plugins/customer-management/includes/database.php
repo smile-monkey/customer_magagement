@@ -24,18 +24,20 @@ function create_customer_table() {
 
 	try {
 		$query = "CREATE TABLE IF NOT EXISTS`".customer_tb."` (
-				  `id` int(11) NOT NULL AUTO_INCREMENT,
-				  `user_id` int(11) DEFAULT NULL,
-				  `user_status` int(11) DEFAULT NULL COMMENT 'hold:0,active:1,inactive:2',
-				  `customer_type` varchar(255) COLLATE utf8mb4_unicode_520_ci DEFAULT NULL COMMENT 'Retailer, Business',
-				  `group_id` varchar(255) COLLATE utf8mb4_unicode_520_ci DEFAULT NULL,
-				  `company` varchar(255) COLLATE utf8mb4_unicode_520_ci DEFAULT NULL,
-				  `tax_number` varchar(255) COLLATE utf8mb4_unicode_520_ci DEFAULT NULL,
-				  `phone` varchar(255) COLLATE utf8mb4_unicode_520_ci DEFAULT NULL,
-				  `mobile` varchar(255) COLLATE utf8mb4_unicode_520_ci DEFAULT NULL,
-				  `shipping_check` int(11) DEFAULT NULL COMMENT '0 or 1',
-				  PRIMARY KEY (`id`)
-				) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_520_ci";
+					  `id` int(11) NOT NULL AUTO_INCREMENT,
+					  `user_id` int(11) DEFAULT NULL,
+					  `user_status` int(11) DEFAULT NULL COMMENT 'hold:0,active:1,inactive:2',
+					  `customer_type` varchar(255) COLLATE utf8mb4_unicode_520_ci DEFAULT NULL COMMENT 'Retailer, Business',
+					  `group_id` int(11) DEFAULT NULL,
+					  `company` varchar(255) COLLATE utf8mb4_unicode_520_ci DEFAULT NULL,
+					  `tax_number` varchar(255) COLLATE utf8mb4_unicode_520_ci DEFAULT NULL,
+					  `phone` varchar(255) COLLATE utf8mb4_unicode_520_ci DEFAULT NULL,
+					  `mobile` varchar(255) COLLATE utf8mb4_unicode_520_ci DEFAULT NULL,
+					  `shipping_check` int(11) DEFAULT NULL COMMENT '0 or 1',
+					  `price_id` int(11) DEFAULT NULL,
+					  `payment_terms` int(11) DEFAULT NULL,
+					  PRIMARY KEY (`id`)
+					) ENGINE=MyISAM AUTO_INCREMENT=10001 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_520_ci";
 		$wpdb->query($query);
 
 		$query = "CREATE TABLE IF NOT EXISTS`".customer_doc_tb."` (
@@ -187,6 +189,13 @@ function save_customer_info($save_data) {
 		}
 	}
 	if (sizeof($customer_data) > 0) {
+		if ($save_data['group_id']) {
+			$group_info = get_customers_row_data(customers_group, $save_data['group_id']);
+			if ($group_info) {
+				$customer_data['price_id'] = $group_info->price_id;
+				$customer_data['payment_terms'] = $group_info->payment_terms;
+			}
+		}
 		$wpdb->update($customer_tb,$customer_data,array('id'=>$save_data['customer_id']));
 	}
 	// Update User meta data for billing and shipping
@@ -248,6 +257,13 @@ function save_customer_new() {
 			}
 		}
 		if (sizeof($customer_data) > 0) {
+			if ($save_data['group_id']) {
+				$group_info = get_customers_row_data(customers_group, $save_data['group_id']);
+				if ($group_info) {
+					$customer_data['price_id'] = $group_info->price_id;
+					$customer_data['payment_terms'] = $group_info->payment_terms;
+				}
+			}			
 			$wpdb->insert($customer_db,$customer_data);
 		}
 		// Add User meta data for billing and shipping
@@ -503,13 +519,20 @@ function getUserPriceInfo($user_id) {
 	global $wpdb;
 	try {
 		$price_row = $wpdb->get_row( $wpdb->prepare("SELECT p.* FROM ".customer_tb." AS c
-				JOIN ".customers_group." AS g ON c.`group_id` = g.`id`
-				JOIN ".customers_price." AS p ON g.`price_id` = p.id
+				JOIN ".customers_price." AS p ON c.`price_id` = p.id
 				WHERE c.`user_id` = %d",$user_id));
 		return $price_row;
 	} catch (Exception $e) {
 		return $e;
 	}
+}
+
+/*
+ * Save Customer Price Info on customer price list page
+ */
+function save_customer_price($save_data) {
+	$save_row_id = save_customers_data($save_data, customer_tb, $save_data['customer_id']);
+	return $save_row_id;
 }
 
 if(isset($_POST['doc_save_btn'])) {

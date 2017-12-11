@@ -1,5 +1,4 @@
 /* Main Page Style */
-
 .main-title {
     font-size: 32px !important;
     font-weight: 600 !important;
@@ -318,6 +317,9 @@
     position: absolute;
     top: 0px;
 }
+#select_rule {
+    margin-top: -4px;
+}
 /* Group List Page */
 .group-table > tbody > tr > td:first-child {
     width: 200px;
@@ -343,4 +345,7 @@
 }
 .transaction-table tr td {
     vertical-align: middle;
+}
+.pdf-invoice-img:before {
+    content:url(../../assets/images/invoice.png);
 }

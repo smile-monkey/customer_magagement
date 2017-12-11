@@ -35,7 +35,7 @@ function DisplayCustomer() {
 						<td>$'.$customer_orders['orders_total'].'</td>
 						<td class="user_actions column-user_actions">
 						  <p>
-							<a class="button tips edit" href="'.admin_url( 'admin.php?page=customer_management&main_tab=customer_info&customer_id='.$customer->id ).'">Edit</a>
+							<a class="button tips edit" href="'.admin_url( 'admin.php?page=customer_management&main_tab=customer_info&customer_id='.$customer->id ).'" title="Customer Edit"></a>
 						  </p>
 						</td>
 					</tr>
@@ -160,7 +160,7 @@ function DisplayPayment() {
  */
 function add_customer() {
 	$group_options = get_customer_group_options();
-    $country_options = get_country_options("US");
+    $country_options = get_country_options("NZ");
 ?>
   <div class="add-header">
   	<img src="<?php echo plugins_url( '../assets/images/customer-icon.png' , __FILE__ );?>">
@@ -545,7 +545,6 @@ function get_transaction_body($customer_id, $start_date=null, $end_date=null, $o
 	        )
         )        
     ) );
-    
 	$transaction = '';
     if (sizeof($customer_orders)>0) {
 	    foreach ( $customer_orders as $customer_order ) {
@@ -563,7 +562,9 @@ function get_transaction_body($customer_id, $start_date=null, $end_date=null, $o
 	        if ($order_search_box && strpos($shipping_address, $order_search_box)==false) {
 	        	continue;
 	        }
-	        
+
+    		$invoice_url = wp_nonce_url( admin_url( "admin-ajax.php?action=generate_wpo_wcpdf&document_type=invoice&order_ids=" . $order_data['number'] ), 'generate_wpo_wcpdf' );
+
 	        $transaction .= '<tr id="post_'.$order_data['id'].'">
 	        	<td class="order_status column-order_status">
 	        		<mark class="'.$order_status_class.' tips" title="'.ucfirst($order_status_class).'"></mark>
@@ -573,16 +574,16 @@ function get_transaction_body($customer_id, $start_date=null, $end_date=null, $o
 	        	<td>'.$shipping_address.'</td>
 	        	<td>'.$order_data['customer_note'].'</td>
 	        	<td></td>
-	        	<td>'.$order_data['total'].'</td>
+	        	<td>$'.$order_data['total'].'</td>
 	        	<td></td>
 				<td class="user_actions column-user_actions">
 				  <p>
 					<a class="button tips dashicons dashicons-visibility" title="View Order" href="'.admin_url("post.php?post=".$customer_order->ID."&action=edit").'"></a>
-					<a class="button tips dashicons dashicons-welcome-write-blog" title="PDF Invoice"></a>
-					<a class="button tips dashicons dashicons-migrate" title="Send an email"></a>
+					<a class="button tips dashicons pdf-invoice-img" title="PDF Invoice" href="'.$invoice_url.'"></a>
 				  </p>
 				</td>	        
 	        </tr>';
+					// <a class="button tips dashicons dashicons-migrate" title="Send an email"></a>
 
 	    }
     }
@@ -594,123 +595,57 @@ function get_transaction_body($customer_id, $start_date=null, $end_date=null, $o
 }
 
 function get_customer_price($customer_id) {
-	$customer_info = get_customer_data($customer_id);
-	$group_id = $customer_info->group_id;
-	if ($group_id) {
-		$group_info = get_group_row_data($group_id);
-		$price_id = $group_info->price_id;
-	}
-
-	$price_data = $product_prices = array();
-	if ($price_id){
-		$price_data = get_price_row_data($price_id);
-		$product_prices = get_product_prices($price_id);
-	}
-
-	// Price Rule Checked
-	$price_rule_checked = $price_data[0]->price_rule == 1 ? array('checked','') : array('','checked');
-	// Select Rule Selected
-	$select_rule_checked = $price_data[0]->select_rule == 1 ? array('selected','') : array('','selected');
-
-	if (!$price_id) {
-		$price_rule_checked = array("checked","");
-		$select_rule_checked = array('selected','');
-	}
-	
-	// Number Round Checked
-	$number_round_checked = $price_data[0]->number_round == 1 ? "checked" : "";
-	if ($price_data[0]->price_rule == 1) {
-		$product_content .= '';
-	} else {
-		$args = array(
-		  'post_type'   => 'product',
-		  'posts_per_page' => -1,
-		  'orderby'     => array('date'=>'DESC','title'=>'ASC')
-		);
-		$post_data = get_posts( $args );
-		$product_content .= '
-			<table class="widefat striped product-table">
-			  <thead>
-			  	<tr>
-			  	  <td>SKU</td>
-			  	  <td>Product Name</td>
-			  	  <td>Categories</td>
-			  	  <td>Stock Status</td>
-			  	  <td>Regular Price</td>
-			  	  <td>New Price</td>
-			  	</tr>
-			  </thead>
-			  <tbody>
-		';
-		if (sizeof($post_data)>0) {
-			foreach ($post_data as $post) {
-				$product = wc_get_product($post->ID);
-				$product_row = $product->data;
-				$in_stock = $product->is_in_stock() ? 'In Stock' : '';
-				$product_content .= '
-					<tr>
-					  <td>'.$product->get_sku().'</td>
-					  <td>'.$post->post_title.'</td>
-					  <td>'.$product->get_categories( ', ',  _n( '', 'Category:', sizeof( get_the_terms( $post->ID, 'product_cat' ) ), 'woocommerce' ) . ' ', '' ).'</td>
-					  <td>'.$in_stock.'</td>
-					  <td>'.$product->get_regular_price().'</td>
-					  <td style="padding-bottom: 0px;"><input type="text" name="post_'.$post->ID.'" id="post_'.$post->ID.'" style="width:70px;" value="'.$product_prices[$post->ID].'"></td>
-					</tr>
-				';
-			}
-		}else {
-			$product_content .= '<tr style="text-align:center;"><td colspan="6">No Results</td></tr>';
-		}
-		$product_content .= '</tbody></table>';
-	}
-
+	$customer_data = get_customer_data($customer_id);
+	$customer_group = get_group_row_data($customer_data->group_id);
 	$content = '
+	  <form method="post" class="customer-edit-data" action="" enctype="multipart/form-data">
 		<div>
 			<h1>Price List</h1>
-		</div>
-		<div>
-		  <form method="post" id="customer_content_data" action="" enctype="multipart/form-data">
-			<table class="price-table">
-			  <tr>
+			<table class="add_form_table">
+	  		  <tr>
+	  		  	<td>
+	  		  		<span class="td-text">Customer Type</span>
+	  		  	</td>
+	  		  	<td>
+	  		  		<input type="text" value="'.$customer_data->customer_type.'" disabled>
+	  		  		<input type="hidden" name="customer_id" id="customer_id" value="'.$customer_id.'">
+	  		  		<input type="hidden" name="main_tab" id="main_tab" value="customer_price">
+	  		  	</td>
+	  		  </tr>
+	  		  <tr>
+	  		  	<td>
+	  		  		<span class="td-text">Customer Group</span>
+	  		  	</td>
+	  		  	<td>	  		  		
+	  		  		<input type="text" value="'.$customer_group->group_name.'" disabled>
+	  		  	</td>
+	  		  </tr>
+	  		  <tr>
+	  		  	<td>
+	  		  		<span class="td-text">Price List Name</span>
+	  		  	</td>
 			  	<td>
-			  		<span class="td-text">Name</span>
+			  		<select name="price_id" id="price_id">'.get_price_options($customer_data->price_id).'</select>
 			  	</td>
-			  	<td>
-			  		<input type="text" name="price_name" id="price_name" value="'.$price_data[0]->price_name.'">
-			  	</td>			  	
-			  </tr>
-			  <tr>
-			  	<td style="padding-bottom:50px;">
-			  	  <span class="td-text">Price Rule</span>
-			  	</td>
-			  	<td>
-			  	  <input type="radio" name="price_rule" class="price-rule" value="1" '.$price_rule_checked[0].'> Markup OR Markdown the item rates by an percentage.<br><br>
-			  	  <input type="radio" name="price_rule" class="price-rule" value="0" '.$price_rule_checked[1].'> Enter a price manually for each item
-			  	</td>
-			  </tr>
-			  <tr>
-			  	<td style="padding-bottom:50px;">
-			  	  <span class="td-text">Percentage</span>
-			  	</td>			  
-			  	<td>
-			  	  <select name="select_rule" id="select_rule">
-			  	  	<option value="1" '.$select_rule_checked[0].'>MarkUp %</option>
-			  	  	<option value="0" '.$select_rule_checked[1].'>MarkDown %</option>
-			  	  </select>
-			  	  <input type="number" name="price_percentage" id="price_percentage" min="0" style="width: 60px;" value="'.$price_data[0]->price_percentage.'"> %<br>
-			  	  <input type="checkbox" name="number_round" id="number_round" '.$number_round_checked.'> Round off to nearest whole number
-			  	</td>
-	  	  	  </tr>
-			  <tr class="product-list">
-			  	<td>
-			  	  <span class="td-text">Enter New Price</span>
-			  	</td>
-			  	<td>'.$product_content.'</td>
-			  </tr>		  
+	  		  </tr>
+	  		  <tr>
+	  		  	<td>
+	  		  		<span class="td-text">Payment Terms Name</span>
+	  		  	</td>
+	  		  	<td>	  		  		
+	  		  		<select name="payment_terms" id="payment_terms">'.get_payment_terms_options($customer_data->payment_terms).'</select>
+	  		  	</td>
+	  		  </tr>	  		  
+		  	  <tr>
+				  <td colspan="2" class="edit-footer">
+				  	<input type="submit" class="customer-button customer-edit-button" value="Save">
+				  </td>
+		  	  </tr>	  		  
 			</table>
-		  </form>
 		</div>
+	  </form>
 	';
+
 	return $content;
 }
 
