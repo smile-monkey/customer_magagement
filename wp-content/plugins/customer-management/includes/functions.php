@@ -217,20 +217,26 @@ function add_customer() {
   		  		<input name="company" type="text" id="company" value="">
   		  	</td>
   		  	<td>
+  		  		<span class="td-text">Call Trading Name</span><br>
+  		  		<input name="trading_name" type="text" id="trading_name" value="">
+  		  	</td>  		  	
+  		  </tr>
+  		  <tr>
+  		  	<td>
   		  		<span class="td-text">Tax Number</span><br>
   		  		<input name="tax_number" type="text" id="tax_number" value="">
   		  	</td>		  		  	
-  		  </tr>
-  		  <tr>
   		  	<td>
   		  		<span class="td-text">Phone</span><br>
   		  		<input name="phone" type="text" id="phone" value="">
   		  	</td>
-  		  	<td>
+  		  </tr>
+  		  <tr>
+  		  	<td colspan="2">
   		  		<span class="td-text">Mobile</span><br>
   		  		<input name="mobile" type="text" id="mobile" value="">
   		  	</td>
-  		  </tr>
+  		  </tr>  		  
   		  <tr>
   		  	<td colspan="2">
   		  		<span class="td-text">Email Address</span><br>
@@ -400,6 +406,7 @@ function get_customer_info($customer_id) {
 
 	$billing_countries = get_country_options($user_meta_info['billing_country'][0]);
 	$shipping_countries = get_country_options($user_meta_info['shipping_country'][0]);
+	$ct_type = $customer_data->customer_type == 'Retailer' ? array('checked', '') : array('','checked');
 
 	$content = "
 	<form id='customer_edit_data' method='post' class='customer-edit-data' action='' enctype='multipart/form-data'>
@@ -416,7 +423,10 @@ function get_customer_info($customer_id) {
 	  	  </tr>
 	  	  <tr>
 	  		<td><span class='td-text'>Customer Type:</span></td>
-	  		<td><input name='customer_type' type='text' value='".$customer_data->customer_type."' disabled></td>
+	  		<td>
+  				<label style='padding-right: 20px; padding-left: 4px;'><input type='radio' name='customer_type' value='Retailer' ".$ct_type[0].">Retailer</label>
+  				<label><input type='radio' name='customer_type' value='Business' ".$ct_type[1].">Business</label>
+	  		</td>
 	  	  </tr>
 	  	  <tr>
 	  		<td><span class='td-text'>Customer Group:</span></td>
@@ -425,7 +435,11 @@ function get_customer_info($customer_id) {
 	  	  <tr>
 	  		<td><span class='td-text'>Company Name:</span></td>
 	  		<td><input id='company' name='company' type='text' value='".$customer_data->company."'s></td>
-	  	  </tr>	  	  	  	  
+	  	  </tr>
+	  	  <tr>
+	  		<td><span class='td-text'>Call Trading Name:</span></td>
+	  		<td><input id='trading_name' name='trading_name' type='text' value='".$customer_data->trading_name."'s></td>
+	  	  </tr>
 	  	  <tr>
 	  		<td><span class='td-text'>First Name:</span></td>
 	  		<td><input id='first_name' name='first_name' type='text' value='".$user_meta_info['first_name'][0]."'></td>
@@ -474,6 +488,12 @@ function get_customer_info($customer_id) {
   		  		<input type='text' name='shipping_state' id='shipping_state' value='".$user_meta_info['shipping_state'][0]."' placeholder='State / Province'><br>
   		  		<input type='text' name='shipping_postcode' id='shipping_postcode' value='".$user_meta_info['shipping_postcode'][0]."' placeholder='Postal Code / Zip Code'><br>
   		  		<select name='shipping_country' id='shipping_country' class='country-select'>".$shipping_countries."</select>
+  		  	</td>
+  		  </tr>
+  		  <tr>
+		  	<td colspan='2'>
+		  		<span class='td-text'>Payment Terms</span><br>	  		  		
+  		  		<select name='payment_terms' id='payment_terms'>".get_payment_terms_options($customer_data->payment_terms)."</select>
   		  	</td>
   		  </tr>
 	  	</table>
@@ -559,10 +579,9 @@ function get_transaction_body($customer_id, $start_date=null, $end_date=null, $o
 	        if ($order_address['address_1'] || $order_address['address_2'] || $order_address['city'])
 	        	$shipping_address = $order_address['address_1']." ".$order_address['address_2']."<br>".$order_address['city']."-".$order_address['postcode'];
 
-	        if ($order_search_box && strpos($shipping_address, $order_search_box)==false) {
+	        if ($order_search_box && (strpos($shipping_address, $order_search_box)===false && strpos($order_data['number'], $order_search_box)===false && strpos($order_data['total'], $order_search_box)===false )) {
 	        	continue;
 	        }
-
     		$invoice_url = wp_nonce_url( admin_url( "admin-ajax.php?action=generate_wpo_wcpdf&document_type=invoice&order_ids=" . $order_data['number'] ), 'generate_wpo_wcpdf' );
 
 	        $transaction .= '<tr id="post_'.$order_data['id'].'">
@@ -627,15 +646,7 @@ function get_customer_price($customer_id) {
 			  	<td>
 			  		<select name="price_id" id="price_id">'.get_price_options($customer_data->price_id).'</select>
 			  	</td>
-	  		  </tr>
-	  		  <tr>
-	  		  	<td>
-	  		  		<span class="td-text">Payment Terms Name</span>
-	  		  	</td>
-	  		  	<td>	  		  		
-	  		  		<select name="payment_terms" id="payment_terms">'.get_payment_terms_options($customer_data->payment_terms).'</select>
-	  		  	</td>
-	  		  </tr>	  		  
+	  		  </tr>  		  
 		  	  <tr>
 				  <td colspan="2" class="edit-footer">
 				  	<input type="submit" class="customer-button customer-edit-button" value="Save">
@@ -732,9 +743,7 @@ function get_customer_delivery($customer_id) {
 				  		<input type="radio" name="delivery_charge" value="1" '.$delivery_charge[1].'>
 				  		<select disabled style="width:80px;"><option>Flat Fee</option></select>
 				  		<input type="text" name="flat_fee" id="flat_fee" value="'.$group_data->flat_fee.'" placeholder="$">
-				  		<span style="text-decoration:underline;">Enter Price</span><br><br>
-				  		<input type="radio" name="delivery_charge" value="2" '.$delivery_charge[2].'>
-				  		<select disabled><option>Select Shippping Rate Table</option></select>				  		
+				  		<span style="text-decoration:underline;">Enter Price</span><br><br>			  		
 				  	</td>			  	
 				  </tr>
 				  <tr>
@@ -1199,8 +1208,6 @@ function get_group_content($row_id=null) {
 				  		<select disabled style="width:80px;"><option>Flat Fee</option></select>
 				  		<input type="text" name="flat_fee" id="flat_fee" value="'.$group_data->flat_fee.'" placeholder="$">
 				  		<span style="text-decoration:underline;">Enter Price</span><br><br>
-				  		<input type="radio" name="delivery_charge" value="2" '.$delivery_charge[2].'>
-				  		<select disabled><option>Select Shippping Rate Table</option></select>				  		
 				  	</td>			  	
 				  </tr>
 				  <tr>
@@ -1236,7 +1243,7 @@ function get_group_content($row_id=null) {
   	  		<input type="button" name="customer_cancel_btn" id="customer_cancel_btn" class="document-button" value="Cancel">
   	  		<input type="submit" name="customer_save_btn" id="customer_save_btn" class="document-button customer-save-btn" value="Save">
 		</div>		
-	';
+	';			  		
 
 	return $content;
 }

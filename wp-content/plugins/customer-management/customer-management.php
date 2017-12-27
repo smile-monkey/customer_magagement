@@ -67,7 +67,6 @@ if (!class_exists(Customer_Management)){
 			add_action ('wp_ajax_process_document_action', array(&$this, 'process_document_action'));
 			add_action ('wp_ajax_save_customer_content_data', array(&$this, 'save_customer_content_data'));
 			add_action ('wp_ajax_get_transaction_data', array(&$this, 'get_transaction_data'));
-			
 
 		}
 

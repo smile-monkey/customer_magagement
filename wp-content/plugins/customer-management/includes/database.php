@@ -30,6 +30,7 @@ function create_customer_table() {
 					  `customer_type` varchar(255) COLLATE utf8mb4_unicode_520_ci DEFAULT NULL COMMENT 'Retailer, Business',
 					  `group_id` int(11) DEFAULT NULL,
 					  `company` varchar(255) COLLATE utf8mb4_unicode_520_ci DEFAULT NULL,
+					  `trading_name` varchar(255) COLLATE utf8mb4_unicode_520_ci DEFAULT NULL,
 					  `tax_number` varchar(255) COLLATE utf8mb4_unicode_520_ci DEFAULT NULL,
 					  `phone` varchar(255) COLLATE utf8mb4_unicode_520_ci DEFAULT NULL,
 					  `mobile` varchar(255) COLLATE utf8mb4_unicode_520_ci DEFAULT NULL,
@@ -193,7 +194,6 @@ function save_customer_info($save_data) {
 			$group_info = get_customers_row_data(customers_group, $save_data['group_id']);
 			if ($group_info) {
 				$customer_data['price_id'] = $group_info->price_id;
-				$customer_data['payment_terms'] = $group_info->payment_terms;
 			}
 		}
 		$wpdb->update($customer_tb,$customer_data,array('id'=>$save_data['customer_id']));
@@ -232,7 +232,7 @@ function save_customer_login($save_data) {
 	return true;
 }
 
-function save_customer_new() {
+function save_customer_new() { // add new Customer
 
 	global $wpdb;
 	$save_data = array();
