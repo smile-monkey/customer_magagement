@@ -142,7 +142,7 @@ function save_customers_data($save_data, $table_name, $row_id=null) {
 		$customer_data = array();
 		$colNames = $wpdb->get_col("DESC {$table_name}", 0);
 		foreach ($colNames as $colname) {
-			if (isset($save_data[$colname])) {
+			if (isset($save_data[$colname]) && $save_data[$colname]) {
 				$customer_data[$colname] = $save_data[$colname];
 			}
 		}
@@ -503,7 +503,8 @@ function get_product_prices($price_id) {
 		$rows = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM ".customers_product." WHERE `price_id` = %d", $price_id));
 		if (sizeof($rows)>0) {
 			foreach ($rows as $row) {
-				$product_prices[$row->post_id] = $row->product_price;
+				if (isset($row->product_price))
+					$product_prices[$row->post_id] = $row->product_price;
 			}
 		}
 	} catch (Exception $e) {
