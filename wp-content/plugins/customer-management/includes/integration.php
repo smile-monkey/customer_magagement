@@ -70,4 +70,22 @@
 		    }
 		}
 	}
+
+	// add Delivery Date during checkout process
+	function add_delivery_date() {
+		if (is_user_logged_in()) {
+	    	$current_user = wp_get_current_user();
+	    	$user_id = $current_user->ID;
+	    	$group_row = getGroupByUserId($user_id);
+	    	if ($group_row->cut_off_time == 1) {
+				echo "<h3>Shipping and delivery</h3>
+					<span>We will try our best to deliver your order on the specified date.</span>
+					<h4 id='delivery-date-label'>Pick a delivery Date</h4>
+					<input type='text' class='order-date delivery-datepicker' required pattern='[0-9]{4}-[0-9]{2}-[0-9]{2}' placeholder='yyyy-mm-dd'>
+
+				";
+	    	}
+	    	
+		}
+	}
 ?>

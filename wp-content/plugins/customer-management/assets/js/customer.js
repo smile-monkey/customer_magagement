@@ -5,7 +5,7 @@ jQuery(function ($) {
 		document_action();
 		$('.order-date').datepicker({dateFormat: 'yy-mm-dd'});
 	});
-
+	$('.delivery-datepicker').datepicker({dateFormat: 'yy-mm-dd'});
 	$(".customer-list li").on("click",function(e){
 		var obj = e.target;
 		$( ".customer-list li" ).each(function() {

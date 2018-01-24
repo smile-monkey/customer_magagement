@@ -142,7 +142,7 @@ function save_customers_data($save_data, $table_name, $row_id=null) {
 		$customer_data = array();
 		$colNames = $wpdb->get_col("DESC {$table_name}", 0);
 		foreach ($colNames as $colname) {
-			if (isset($save_data[$colname]) && $save_data[$colname]) {
+			if (isset($save_data[$colname])) {
 				$customer_data[$colname] = $save_data[$colname];
 			}
 		}
@@ -535,6 +535,21 @@ function save_customer_price($save_data) {
 	$save_row_id = save_customers_data($save_data, customer_tb, $save_data['customer_id']);
 	return $save_row_id;
 }
+/*
+ * Get User Group info by User ID
+ */
+function getGroupByUserId($user_id) {
+	global $wpdb;
+	try {
+		$group_row = $wpdb->get_row( $wpdb->prepare("SELECT g.* FROM ".customers_group." AS g
+				JOIN ".customer_tb." AS c ON g.`id` = c.`group_id`
+				WHERE c.`user_id` = %d",$user_id));
+		return $group_row;
+	} catch (Exception $e) {
+		return $e;
+	}
+}
+
 
 if(isset($_POST['doc_save_btn'])) {
 	$save_data = $_POST;

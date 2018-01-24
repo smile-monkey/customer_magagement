@@ -349,3 +349,15 @@
 .pdf-invoice-img:before {
     content:url(../../assets/images/invoice.png);
 }
+
+#delivery-date-label {
+    font-weight: 600;
+    margin-top: 10px;
+    font-size: 16px;
+}
+.order-date.delivery-datepicker {
+    margin: 1px;
+    padding: 3px 10px;
+    width: 100%;
+    text-align: left;
+}

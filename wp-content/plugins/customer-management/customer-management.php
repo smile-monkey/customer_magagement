@@ -53,8 +53,8 @@ if (!class_exists(Customer_Management)){
 			/**
 			 * Load CSS and JS files
 			 */
-			add_action('admin_init', array(&$this, 'Customer_Management_Init'));
-			
+			// add_action('admin_init', array(&$this, 'Customer_Management_Init'));
+			add_action( 'init', array(&$this, 'Customer_Management_Init'));
 			/**
 			 * Ajax define
 			 */
@@ -301,5 +301,6 @@ if (!class_exists(Customer_Management)){
 $customerManagement = new Customer_Management();
 add_filter('woocommerce_get_price', 'return_custom_price', 10, 2);
 add_action( 'woocommerce_before_calculate_totals', 'add_custom_price' );
+add_action( 'woocommerce_after_order_notes', 'add_delivery_date');
 
 ?>
