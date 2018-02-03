@@ -34,8 +34,8 @@ include_once (__DIR__ . '/includes/integration.php');
 
 if (!class_exists(Customer_Management)){
 	/**
-	* 
-	*/
+	 * 
+	 */
 	class Customer_Management
 	{
 

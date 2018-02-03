@@ -24,21 +24,22 @@ function create_customer_table() {
 
 	try {
 		$query = "CREATE TABLE IF NOT EXISTS`".customer_tb."` (
-					  `id` int(11) NOT NULL AUTO_INCREMENT,
-					  `user_id` int(11) DEFAULT NULL,
-					  `user_status` int(11) DEFAULT NULL COMMENT 'hold:0,active:1,inactive:2',
-					  `customer_type` varchar(255) COLLATE utf8mb4_unicode_520_ci DEFAULT NULL COMMENT 'Retailer, Business',
-					  `group_id` int(11) DEFAULT NULL,
-					  `company` varchar(255) COLLATE utf8mb4_unicode_520_ci DEFAULT NULL,
-					  `trading_name` varchar(255) COLLATE utf8mb4_unicode_520_ci DEFAULT NULL,
-					  `tax_number` varchar(255) COLLATE utf8mb4_unicode_520_ci DEFAULT NULL,
-					  `phone` varchar(255) COLLATE utf8mb4_unicode_520_ci DEFAULT NULL,
-					  `mobile` varchar(255) COLLATE utf8mb4_unicode_520_ci DEFAULT NULL,
-					  `shipping_check` int(11) DEFAULT NULL COMMENT '0 or 1',
-					  `price_id` int(11) DEFAULT NULL,
-					  `payment_terms` int(11) DEFAULT NULL,
-					  PRIMARY KEY (`id`)
-					) ENGINE=MyISAM AUTO_INCREMENT=10001 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_520_ci";
+				  `id` int(11) NOT NULL AUTO_INCREMENT,
+				  `user_id` int(11) DEFAULT NULL,
+				  `user_status` int(11) DEFAULT NULL COMMENT 'hold:0,active:1,inactive:2',
+				  `customer_type` varchar(255) COLLATE utf8mb4_unicode_520_ci DEFAULT NULL COMMENT 'Retailer, Business',
+				  `group_id` int(11) DEFAULT NULL,
+				  `company` varchar(255) COLLATE utf8mb4_unicode_520_ci DEFAULT NULL,
+				  `trading_name` varchar(255) COLLATE utf8mb4_unicode_520_ci DEFAULT NULL,
+				  `tax_number` varchar(255) COLLATE utf8mb4_unicode_520_ci DEFAULT NULL,
+				  `phone` varchar(255) COLLATE utf8mb4_unicode_520_ci DEFAULT NULL,
+				  `mobile` varchar(255) COLLATE utf8mb4_unicode_520_ci DEFAULT NULL,
+				  `shipping_check` int(11) DEFAULT NULL COMMENT '0 or 1',
+				  `price_id` int(11) DEFAULT NULL,
+				  `payment_terms` int(11) DEFAULT NULL,
+				  `payment_method` tinyint(1) DEFAULT NULL COMMENT '0:On Account, 1: Credit Card',
+				  PRIMARY KEY (`id`)
+				) ENGINE=MyISAM AUTO_INCREMENT=10001 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_520_ci";
 		$wpdb->query($query);
 
 		$query = "CREATE TABLE IF NOT EXISTS`".customer_doc_tb."` (
@@ -165,6 +166,29 @@ function get_customer_list() {
 	global $wpdb;
 	$customer_list = $wpdb->get_results("select * from `".customer_tb."`");
 	return $customer_list;
+}
+/*
+ * Check customers registered
+ */
+function check_customer_list() {
+	$user_list = get_users();
+	global $wpdb;
+	$user_ids = $wpdb->get_col("select user_id from `".customer_tb."`");
+	if (sizeof($user_list) > sizeof($user_ids)) {
+		$save_data = array('customer_type'=>'Retailer', 'user_status'=>1);
+		$group_data = get_group_row_data();
+		if (sizeof($group_data)>0) {
+			$save_data['group_id'] = $group_data[0]->id;
+			$save_data['price_id'] = $group_data[0]->price_id;
+			$save_data['payment_terms'] = $group_data[0]->payment_terms;
+		}
+		foreach ($user_list as $user) {
+			if (!in_array($user->data->ID, $user_ids)) { // user registered into customer
+				$save_data['user_id'] = $user->data->ID;
+				$wpdb->insert(customer_tb,$save_data);
+			}
+		}
+	}
 }
 
 /*

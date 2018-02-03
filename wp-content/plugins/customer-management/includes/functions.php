@@ -6,6 +6,7 @@
  */
 
 function DisplayCustomer() {
+	check_customer_list();
 	$customer_list = get_customer_list();
 	$content = '
 		<table class="widefat striped customer-table">
@@ -26,10 +27,12 @@ function DisplayCustomer() {
 
 				$user_info = get_user_meta($customer->user_id);
 				if (!$user_info) continue;
+				$user_name = $user_info['first_name'][0].' '.$user_info['last_name'][0];
+				if ($user_name == ' ') $user_name = '—';
 				$content .='
 					<tr>
 						<td>'.$customer->id.'</td>
-						<td>'.$user_info['first_name'][0].' '.$user_info['last_name'][0].'</td>
+						<td>'.$user_name.'</td>
 						<td>'.$customer->company.'</td>
 						<td>'.$customer_orders['orders_count'].'</td>
 						<td>$'.$customer_orders['orders_total'].'</td>
@@ -385,6 +388,24 @@ function get_payment_terms_options($selected_terms=null) {
 }
 
 /*
+ * Get payment method options
+ */
+function get_payment_method_options($selected_payment=null) {
+	$payment_opt = array('','');
+	if ($selected_payment != null) {
+		$payment_opt[$selected_payment] = 'selected';
+	} else {
+		$payment_opt[1] = 'selected';
+	}
+	$disabled = $payment_opt[1] == 'selected' ? 'disabled' : '';
+	$method_options = '<select name="payment_method" id="payment_method" '.$disabled.'>
+			<option value="0" '.$payment_opt[0].'>On Account</option>
+			<option value="1" '.$payment_opt[1].'>Credit Card</option>
+		</select>';
+	return $method_options;
+}
+
+/*
  * Get Week options
  */
 function get_week_options($selected_week=1) {
@@ -407,7 +428,8 @@ function get_customer_info($customer_id) {
 	$billing_countries = get_country_options($user_meta_info['billing_country'][0]);
 	$shipping_countries = get_country_options($user_meta_info['shipping_country'][0]);
 	$ct_type = $customer_data->customer_type == 'Retailer' ? array('checked', '') : array('','checked');
-
+	$selected_payment = $customer_data->customer_type == 'Retailer' ? 1 : $customer_data->payment_method;
+	
 	$content = "
 	<form id='customer_edit_data' method='post' class='customer-edit-data' action='' enctype='multipart/form-data'>
 	  <div style='float:left;'>
@@ -491,10 +513,13 @@ function get_customer_info($customer_id) {
   		  	</td>
   		  </tr>
   		  <tr>
-		  	<td colspan='2'>
+		  	<td>
 		  		<span class='td-text'>Payment Terms</span><br>	  		  		
   		  		<select name='payment_terms' id='payment_terms'>".get_payment_terms_options($customer_data->payment_terms)."</select>
   		  	</td>
+		  	<td>
+		  		<span class='td-text'>Payment Method</span><br>".get_payment_method_options($selected_payment)."
+  		  	</td>  		  	
   		  </tr>
 	  	</table>
 	  </div>
