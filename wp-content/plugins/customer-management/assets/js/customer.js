@@ -123,6 +123,15 @@ jQuery(function ($) {
 			window.location = ajax_object.adminurl;
 		}
 	});
+	
+	$("input[name=customer_type]").on("change", function(e){
+		if (e.target.value == "Retailer") {
+			$("#payment_method").val(1);
+			$('#payment_method').prop('disabled', 'disabled');
+		} else {
+			$('#payment_method').prop('disabled', false);
+		}
+	});
 
 	$(".customer-edit-button").on("click", function(e){
 		e.preventDefault();

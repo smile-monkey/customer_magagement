@@ -1,3 +1,10 @@
+/* General Style */
+.widefat .column-order_status mark {
+    cursor: pointer;
+}
+.wp-admin select {
+    margin-top: 10px;
+}
 /* Main Page Style */
 .main-title {
     font-size: 32px !important;
@@ -45,11 +52,6 @@
     height: 2em !important;
     padding-top: 0px !important;
 }
-/* General Style */
-.widefat .column-order_status mark {
-    cursor: pointer;
-}
-
 /* Add Customer, Group or View Customer */
 .customer-add, .group-add, .customer-edit {
     margin: 20px;
