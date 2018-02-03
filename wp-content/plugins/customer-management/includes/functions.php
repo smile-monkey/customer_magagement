@@ -390,15 +390,14 @@ function get_payment_terms_options($selected_terms=null) {
 /*
  * Get payment method options
  */
-function get_payment_method_options($selected_payment=null) {
+function get_payment_method_options($selected_payment) {
 	$payment_opt = array('','');
-	if ($selected_payment != null) {
-		$payment_opt[$selected_payment] = 'selected';
-	} else {
+	if ($selected_payment[0] == 1) {
 		$payment_opt[1] = 'selected';
+	} else {
+		$payment_opt[0] = 'selected';
 	}
-	$disabled = $payment_opt[1] == 'selected' ? 'disabled' : '';
-	$method_options = '<select name="payment_method" id="payment_method" '.$disabled.'>
+	$method_options = '<select name="payment_method" id="payment_method" '.$selected_payment[1].'>
 			<option value="0" '.$payment_opt[0].'>On Account</option>
 			<option value="1" '.$payment_opt[1].'>Credit Card</option>
 		</select>';
@@ -428,7 +427,7 @@ function get_customer_info($customer_id) {
 	$billing_countries = get_country_options($user_meta_info['billing_country'][0]);
 	$shipping_countries = get_country_options($user_meta_info['shipping_country'][0]);
 	$ct_type = $customer_data->customer_type == 'Retailer' ? array('checked', '') : array('','checked');
-	$selected_payment = $customer_data->customer_type == 'Retailer' ? 1 : $customer_data->payment_method;
+	$selected_payment = $customer_data->customer_type == 'Retailer' ? array(1,'disabled') : array($customer_data->payment_method,'');
 	
 	$content = "
 	<form id='customer_edit_data' method='post' class='customer-edit-data' action='' enctype='multipart/form-data'>
