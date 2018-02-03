@@ -118,6 +118,28 @@ function create_customer_table() {
 		echo $e;
 	}			
 }
+
+function drop_customer_table() {
+	global $wpdb;
+	try {
+		$query = "DROP TABLE IF EXISTS`".customer_tb."`";
+		$wpdb->query($query);
+		$query = "DROP TABLE IF EXISTS`".customer_doc_tb."`";
+		$wpdb->query($query);
+		$query = "DROP TABLE IF EXISTS`".customers_payment."`";
+		$wpdb->query($query);
+		$query = "DROP TABLE IF EXISTS`".customers_price."`";
+		$wpdb->query($query);
+		$query = "DROP TABLE IF EXISTS`".customers_product."`";
+		$wpdb->query($query);
+		$query = "DROP TABLE IF EXISTS`".customers_group."`";
+		$wpdb->query($query);
+		$query = "DROP TABLE IF EXISTS`".customers_cut_off_time."`";
+		$wpdb->query($query);
+	} catch (Exception $e) {
+		echo $e;
+	}		
+}
 /*
  * Get Customers Data(Customer, Group, Price, Payment Terms)
  */

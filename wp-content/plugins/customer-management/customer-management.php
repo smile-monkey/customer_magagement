@@ -44,7 +44,8 @@ if (!class_exists(Customer_Management)){
 			/**
 			 * Create a table for customer management.
 			 */
-			register_activation_hook( __FILE__, 'create_customer_table');			
+			register_activation_hook( __FILE__, 'create_customer_table');
+			register_deactivation_hook( __FILE__, 'drop_customer_table');
 			/**
 			 * Add sub menu page to menu
 			 */
